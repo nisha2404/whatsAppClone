@@ -1,5 +1,8 @@
 // ignore_for_file: import_of_legacy_library_into_null_safe
 
+import 'dart:io';
+
+import 'package:chatting_app/Screens/Dashboard/dashboard.dart';
 import 'package:chatting_app/app_config.dart';
 import 'package:chatting_app/components/expanded_button.dart';
 import 'package:chatting_app/components/help_popup_button.dart';
@@ -26,6 +29,8 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
   final TextEditingController _aboutController = TextEditingController();
 
   bool showEmojis = false;
+
+  final ImagePicker _picker = ImagePicker();
 
   CroppedFile? croppedProfileImg;
   XFile? profileImage;
@@ -75,10 +80,20 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
                         style: GetTextTheme.sf14_medium
                             .copyWith(color: AppColors.grey150)),
                     AppServices.addHeight(40.h),
-                    const CircleAvatar(
-                      radius: 60,
-                      backgroundImage: AssetImage(AppImages.avatarPlaceholder),
-                    ),
+                    croppedProfileImg == null
+                        ? GestureDetector(
+                            onTap: () => onImagePick(),
+                            child: const CircleAvatar(
+                              radius: 60,
+                              backgroundImage:
+                                  AssetImage(AppImages.avatarPlaceholder),
+                            ),
+                          )
+                        : CircleAvatar(
+                            radius: 60,
+                            backgroundImage:
+                                FileImage(File(croppedProfileImg!.path)),
+                          ),
                     AppServices.addHeight(20.h),
                     Row(
                       children: [
@@ -126,7 +141,10 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
                     AppServices.addHeight(80.h),
                     Row(
                       children: [
-                        ExpandedButton(btnName: "Continue", onPress: () => {})
+                        ExpandedButton(
+                            btnName: "Continue",
+                            onPress: () => AppServices.pushAndRemove(
+                                const Dashboard(), context))
                       ],
                     )
                   ],
@@ -151,5 +169,37 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
       rows: 4,
       columns: 7,
     );
+  }
+
+  onImagePick() async {
+    var value = await _picker.pickImage(source: ImageSource.gallery);
+    if (value != null) {
+      await cropImage(value);
+    } else {
+      null;
+    }
+  }
+
+  Future<void> cropImage(XFile img) async {
+    final croppedImage = await ImageCropper().cropImage(
+        sourcePath: img.path,
+        compressFormat: ImageCompressFormat.jpg,
+        compressQuality: 100,
+        uiSettings: [
+          AndroidUiSettings(
+              toolbarTitle: 'Image Cropper',
+              toolbarColor: AppColors.primaryColor,
+              toolbarWidgetColor: AppColors.whiteColor,
+              initAspectRatio: CropAspectRatioPreset.square,
+              hideBottomControls: true,
+              lockAspectRatio: true),
+          IOSUiSettings(title: "Image Cropper")
+        ]);
+
+    if (croppedImage != null) {
+      setState(() => croppedProfileImg = croppedImage);
+    } else {
+      null;
+    }
   }
 }

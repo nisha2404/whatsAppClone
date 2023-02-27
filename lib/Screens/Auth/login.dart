@@ -1,7 +1,8 @@
 import 'package:chatting_app/Screens/Auth/otp_view.dart';
 import 'package:chatting_app/app_config.dart';
 import 'package:chatting_app/components/expanded_button.dart';
-import 'package:chatting_app/components/primary_text_field.dart';
+import 'package:chatting_app/components/help_popup_button.dart';
+import 'package:chatting_app/components/underline_input_border_textfield.dart';
 import 'package:chatting_app/helpers/base_getters.dart';
 import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:chatting_app/helpers/style_sheet.dart';
@@ -34,17 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
             style:
                 GetTextTheme.sf20_bold.copyWith(color: AppColors.primaryColor)),
         centerTitle: true,
-        actions: [
-          PopupMenuButton(
-              position: PopupMenuPosition.under,
-              itemBuilder: (context) => [
-                    PopupMenuItem(
-                        height: 30,
-                        child:
-                            const Text("Help", style: GetTextTheme.sf14_medium),
-                        onTap: () => {})
-                  ])
-        ],
+        actions: const [HelpPopUpMenuButton()],
       ),
       body: SafeArea(
           child: SingleChildScrollView(
@@ -97,38 +88,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      flex: 1,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                            border: Border(
-                                bottom:
-                                    BorderSide(color: AppColors.primaryColor))),
-                        child: TextFieldPrimary(
-                          color: Colors.transparent,
-                          horizontalpadding: 5,
-                          verticalpadding: 5,
+                        flex: 1,
+                        child: UnderlineInputBorderTextField(
                           isDense: true,
                           readOnly: true,
                           controller: _phoneCodecontroller,
-                        ),
-                      ),
-                    ),
+                        )),
                     AppServices.addWidth(10.w),
                     Expanded(
-                      flex: 4,
-                      child: TextFieldPrimary(
-                        border: const UnderlineInputBorder(
-                            borderSide:
-                                BorderSide(color: AppColors.primaryColor)),
-                        inputType: TextInputType.phone,
-                        controller: _phoneController,
-                        color: Colors.transparent,
-                        horizontalpadding: 2,
-                        verticalpadding: 5,
-                        isDense: true,
-                        hint: "phone number",
-                      ),
-                    )
+                        flex: 4,
+                        child: UnderlineInputBorderTextField(
+                            inputType: TextInputType.number,
+                            controller: _phoneController,
+                            isDense: true,
+                            hint: "phone number"))
                   ],
                 ),
               ),
@@ -156,6 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
               phoneNumber:
                   "${_phoneCodecontroller.text}${_phoneController.text}"),
           context);
+      _phoneController.clear();
     } else {
       AppServices.showToast(
           "Invalid Format! please enter a valid mobile number");

@@ -1,5 +1,7 @@
 // ignore_for_file: must_be_immutable
 
+import 'package:chatting_app/Screens/Auth/add_profile_info.dart';
+import 'package:chatting_app/components/help_popup_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:otp_text_field/otp_field.dart';
@@ -38,13 +40,7 @@ class _OtpScreenState extends State<OtpScreen> {
             textAlign: TextAlign.center,
             style:
                 GetTextTheme.sf20_bold.copyWith(color: AppColors.primaryColor)),
-        actions: [
-          PopupMenuButton(
-              position: PopupMenuPosition.under,
-              itemBuilder: (context) => <PopupMenuEntry>[
-                    const PopupMenuItem(height: 30, child: Text("Help"))
-                  ])
-        ],
+        actions: const [HelpPopUpMenuButton()],
       ),
       body: SafeArea(
           child: SingleChildScrollView(
@@ -71,7 +67,12 @@ class _OtpScreenState extends State<OtpScreen> {
               AppServices.addHeight(40.h),
               Row(
                 children: [
-                  ExpandedButton(btnName: "Verify", onPress: () => {}),
+                  ExpandedButton(
+                      btnName: "Verify",
+                      onPress: () => {
+                            AppServices.pushAndRemove(
+                                const AddProfileInfo(), context)
+                          }),
                 ],
               )
             ],

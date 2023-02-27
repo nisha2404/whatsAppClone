@@ -12,8 +12,10 @@ class TextFieldPrimary extends StatelessWidget {
   String hint, prefix;
   TextEditingController? controller;
   Function(String)? onchange;
+  Function? ontap;
   double verticalpadding, horizontalpadding;
   int maxlines;
+  int? maxLength;
   Color prefixColor;
   Color? color;
   double radius;
@@ -31,6 +33,7 @@ class TextFieldPrimary extends StatelessWidget {
       this.verticalpadding = 15,
       this.horizontalpadding = 20,
       this.maxlines = 1,
+      this.maxLength,
       this.prefixColor = AppColors.grey100,
       this.color,
       this.radius = 10,
@@ -38,17 +41,20 @@ class TextFieldPrimary extends StatelessWidget {
       this.isObsecure = false,
       this.border,
       this.isDense = false,
-      this.readOnly = false})
+      this.readOnly = false,
+      this.ontap})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Platform.isAndroid
         ? TextField(
+            onTap: ontap != null ? () => ontap!() : null,
             obscureText: isObsecure,
             keyboardType: inputType,
             onChanged: onchange == null ? null : (value) => onchange!(value),
             maxLines: maxlines,
+            maxLength: maxLength,
             controller: controller,
             readOnly: readOnly,
             obscuringCharacter: "*",

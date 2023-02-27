@@ -13,6 +13,5 @@ class AppLogos {
 class AppImages {
   static const String authVector = "assets/images/authVector.png";
   static const String otpVector = "assets/images/otpVector.png";
-  static const String avatarPlaceholder =
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSlbaTvv8_UXY2s4mOq4LWeoSiBlLcKwUSoLLS0zRtu-w&usqp=CAU&ec=48600113";
+  static const String avatarPlaceholder = "assets/images/avatarPlaceholder.png";
 }

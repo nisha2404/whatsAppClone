@@ -1,8 +1,8 @@
-import 'package:chatting_app/Screens/Auth/otp_view.dart';
 import 'package:chatting_app/app_config.dart';
 import 'package:chatting_app/components/expanded_button.dart';
 import 'package:chatting_app/components/help_popup_button.dart';
 import 'package:chatting_app/components/underline_input_border_textfield.dart';
+import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/base_getters.dart';
 import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:chatting_app/helpers/style_sheet.dart';
@@ -18,6 +18,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  bool isLoading = false;
+
   final TextEditingController _phoneCodecontroller =
       TextEditingController(text: " +91");
   final TextEditingController _phoneController = TextEditingController();
@@ -106,12 +108,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               AppServices.addHeight(50.h),
-              Row(
-                children: [
-                  ExpandedButton(
-                      btnName: "Continue", onPress: () => onContinue())
-                ],
-              )
+              isLoading
+                  ? const CircularProgressIndicator.adaptive()
+                  : Row(
+                      children: [
+                        ExpandedButton(
+                            btnName: "Continue", onPress: () => onContinue())
+                      ],
+                    )
             ],
           ),
         ),
@@ -119,20 +123,20 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  onContinue() {
+  onContinue() async {
+    setState(() => isLoading = true);
     bool isValidate =
         _phoneController.text.isNotEmpty && _phoneController.text.length == 10;
 
     if (isValidate) {
-      AppServices.pushTo(
-          OtpScreen(
-              phoneNumber:
-                  "${_phoneCodecontroller.text}${_phoneController.text}"),
-          context);
+      await FirebaseController().verifyPhone(
+          context, "${_phoneCodecontroller.text}${_phoneController.text}");
       _phoneController.clear();
+      setState(() => isLoading = false);
     } else {
       AppServices.showToast(
           "Invalid Format! please enter a valid mobile number");
+      setState(() => isLoading = false);
     }
   }
 }

@@ -1,11 +1,13 @@
 // ignore_for_file: must_be_immutable
 
-import 'package:chatting_app/Screens/Auth/add_profile_info.dart';
 import 'package:chatting_app/components/help_popup_button.dart';
+import 'package:chatting_app/controllers/app_data_controller.dart';
+import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:otp_text_field/otp_field.dart';
 import 'package:otp_text_field/style.dart';
+import 'package:provider/provider.dart';
 
 import '../../components/expanded_button.dart';
 import '../../helpers/base_getters.dart';
@@ -65,16 +67,20 @@ class _OtpScreenState extends State<OtpScreen> {
                 onCompleted: (value) => setState(() => otp = value),
               ),
               AppServices.addHeight(40.h),
-              Row(
-                children: [
-                  ExpandedButton(
-                      btnName: "Verify",
-                      onPress: () => {
-                            AppServices.pushAndRemove(
-                                const AddProfileInfo(), context)
-                          }),
-                ],
-              )
+              Consumer<AppDataController>(builder: (context, data, child) {
+                return data.showLoader
+                    ? const CircularProgressIndicator.adaptive()
+                    : Row(
+                        children: [
+                          ExpandedButton(
+                              btnName: "Verify",
+                              onPress: () => {
+                                    FirebaseController().verifyCode(
+                                        otp, widget.phoneNumber, context)
+                                  }),
+                        ],
+                      );
+              })
             ],
           ),
         ),

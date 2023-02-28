@@ -1,5 +1,4 @@
-import 'package:chatting_app/Screens/Auth/login.dart';
-import 'package:chatting_app/helpers/base_getters.dart';
+import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:chatting_app/helpers/style_sheet.dart';
 import 'package:flutter/material.dart';
@@ -35,10 +34,8 @@ class _SplashScreenState extends State<SplashScreen>
 
     _animationController.forward();
 
-    Future.delayed(
-        const Duration(milliseconds: 1600),
-        () =>
-            AppServices.fadeTransitionNavigation(context, const LoginScreen()));
+    Future.delayed(const Duration(milliseconds: 1600),
+        () => FirebaseController().isCurrentUser(context));
   }
 
   @override

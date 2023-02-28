@@ -1,7 +1,8 @@
-import 'package:chatting_app/Screens/Dashboard/Chats/chatroom.dart';
-import 'package:chatting_app/helpers/base_getters.dart';
+import 'package:chatting_app/controllers/app_data_controller.dart';
+import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../helpers/icons_and_images.dart';
 import '../../../helpers/style_sheet.dart';
@@ -15,14 +16,22 @@ class ChatViewTab extends StatefulWidget {
 
 class _ChatViewTabState extends State<ChatViewTab> {
   @override
+  void initState() {
+    super.initState();
+    FirebaseController().getAllChatRooms(context);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final db = Provider.of<AppDataController>(context);
+    final chatRooms = db.getAllChatRooms;
     return ListView.builder(
         padding: const EdgeInsets.all(0),
-        itemCount: 20,
+        itemCount: chatRooms.length,
         shrinkWrap: true,
         itemBuilder: (context, i) {
           return ListTile(
-            onTap: () => AppServices.pushTo(const ChatRoom(), context),
+            onTap: () => {},
             leading: Container(
                 // padding: EdgeInsets.all(7.sp),
                 height: 36.sp,

@@ -40,8 +40,13 @@ dependencies:
   fluttertoast: ^8.2.1
   image_picker: ^0.8.6+3
   image_cropper: ^3.0.1
-  emoji_picker_2: ^0.4.0
+  shared_preferences: ^2.0.18
   intl: ^0.18.0
+  firebase_core: ^2.7.0
+  firebase_auth: ^4.2.2
+  firebase_database: ^10.0.14
+  emoji_picker_flutter: ^1.5.2
+  provider: ^6.0.5
 
 dev_dependencies:
   flutter_test:

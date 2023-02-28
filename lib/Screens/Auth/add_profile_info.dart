@@ -10,7 +10,7 @@ import 'package:chatting_app/components/underline_input_border_textfield.dart';
 import 'package:chatting_app/helpers/base_getters.dart';
 import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:chatting_app/helpers/style_sheet.dart';
-import 'package:emoji_picker_2/emoji_picker_2.dart';
+import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -27,8 +27,21 @@ class AddProfileInfo extends StatefulWidget {
 class _AddProfileInfoState extends State<AddProfileInfo> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _aboutController = TextEditingController();
+  bool emojiShowing = false;
 
-  bool showEmojis = false;
+  _onEmojiSelected(Emoji emoji) {
+    _nameController
+      ..text += emoji.emoji
+      ..selection = TextSelection.fromPosition(
+          TextPosition(offset: _nameController.text.length));
+  }
+
+  _onBackspacePressed() {
+    _nameController
+      ..text = _nameController.text.characters.skipLast(1).toString()
+      ..selection = TextSelection.fromPosition(
+          TextPosition(offset: _nameController.text.length));
+  }
 
   final ImagePicker _picker = ImagePicker();
 
@@ -38,9 +51,9 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () {
-        if (showEmojis) {
+        if (emojiShowing) {
           setState(() {
-            showEmojis = false;
+            emojiShowing = false;
           });
           return Future.value(false);
         } else {
@@ -50,7 +63,7 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
       },
       child: GestureDetector(
         onTap: () => {
-          setState(() => showEmojis = false),
+          setState(() => emojiShowing = false),
           AppServices.keyboardUnfocus(context)
         },
         child: Scaffold(
@@ -99,7 +112,7 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
                       children: [
                         Expanded(
                           child: UnderlineInputBorderTextField(
-                            ontap: () => setState(() => showEmojis = false),
+                            ontap: () => setState(() => emojiShowing = false),
                             controller: _nameController,
                             hint: "Enter your name",
                             maxlength: 20,
@@ -108,19 +121,22 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
                             verticalpadding: 0,
                           ),
                         ),
-                        IconButton(
-                            constraints: BoxConstraints(
-                                minHeight: 20.sp, minWidth: 20.sp),
-                            splashRadius: 1.r,
-                            onPressed: () => {
-                                  AppServices.keyboardUnfocus(context),
-                                  Future.delayed(
-                                      const Duration(milliseconds: 220),
-                                      () => setState(
-                                          () => showEmojis = !showEmojis))
-                                },
-                            icon: Icon(Icons.emoji_emotions_outlined,
-                                color: AppColors.grey150, size: 32.sp)),
+                        Material(
+                          color: Colors.transparent,
+                          child: IconButton(
+                            onPressed: () {
+                              AppServices.keyboardUnfocus(context);
+                              setState(() {
+                                emojiShowing = !emojiShowing;
+                              });
+                            },
+                            icon: Icon(
+                              Icons.emoji_emotions_outlined,
+                              color: AppColors.grey150,
+                              size: 32.sp,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     AppServices.addHeight(10.h),
@@ -133,7 +149,7 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
                     ),
                     AppServices.addHeight(40.h),
                     UnderlineInputBorderTextField(
-                      ontap: () => setState(() => showEmojis = false),
+                      ontap: () => setState(() => emojiShowing = false),
                       controller: _aboutController,
                       hint: "Enter something about yourself",
                       isDense: true,
@@ -150,24 +166,41 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
                   ],
                 ),
               ),
-              Positioned(
-                  bottom: 0,
-                  child: showEmojis ? emojiSelect() : const SizedBox())
+              Offstage(
+                offstage: !emojiShowing,
+                child: SizedBox(
+                  height: 250,
+                  child: EmojiPicker(
+                      onEmojiSelected: (category, Emoji emoji) {
+                        _onEmojiSelected(emoji);
+                      },
+                      onBackspacePressed: _onBackspacePressed,
+                      config: Config(
+                          columns: 7,
+                          // Issue: https://github.com/flutter/flutter/issues/28894
+                          emojiSizeMax: 32 * (Platform.isIOS ? 1.30 : 1.0),
+                          verticalSpacing: 0,
+                          horizontalSpacing: 0,
+                          initCategory: Category.RECENT,
+                          bgColor: const Color(0xFFF2F2F2),
+                          indicatorColor: Colors.blue,
+                          iconColor: Colors.grey,
+                          iconColorSelected: Colors.blue,
+                          backspaceColor: Colors.blue,
+                          skinToneDialogBgColor: Colors.white,
+                          skinToneIndicatorColor: Colors.grey,
+                          enableSkinTones: true,
+                          showRecentsTab: true,
+                          recentsLimit: 28,
+                          tabIndicatorAnimDuration: kTabScrollDuration,
+                          categoryIcons: const CategoryIcons(),
+                          buttonMode: ButtonMode.MATERIAL)),
+                ),
+              )
             ],
           )),
         ),
       ),
-    );
-  }
-
-  Widget emojiSelect() {
-    return EmojiPicker2(
-      onEmojiSelected: (emoji, category) => {
-        setState(
-            () => _nameController.text = _nameController.text + emoji.emoji)
-      },
-      rows: 4,
-      columns: 7,
     );
   }
 

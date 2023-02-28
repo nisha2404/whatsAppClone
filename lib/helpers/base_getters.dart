@@ -32,7 +32,7 @@ class AppServices {
   static pushTo(Widget screen, BuildContext context) =>
       Navigator.of(context).push(PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => screen,
-        transitionDuration: const Duration(milliseconds: 500),
+        transitionDuration: const Duration(milliseconds: 300),
         transitionsBuilder: (context, animation, secondaryAnimation, child) =>
             CupertinoPageTransition(
                 primaryRouteAnimation: animation,

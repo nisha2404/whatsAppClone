@@ -7,6 +7,8 @@ import 'package:chatting_app/app_config.dart';
 import 'package:chatting_app/components/expanded_button.dart';
 import 'package:chatting_app/components/help_popup_button.dart';
 import 'package:chatting_app/components/underline_input_border_textfield.dart';
+import 'package:chatting_app/controllers/app_data_controller.dart';
+import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/base_getters.dart';
 import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:chatting_app/helpers/style_sheet.dart';
@@ -16,6 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class AddProfileInfo extends StatefulWidget {
   const AddProfileInfo({super.key});
@@ -44,6 +47,8 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
   }
 
   final ImagePicker _picker = ImagePicker();
+
+  bool isLoading = false;
 
   CroppedFile? croppedProfileImg;
   XFile? profileImage;
@@ -155,14 +160,15 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
                       isDense: true,
                     ),
                     AppServices.addHeight(80.h),
-                    Row(
-                      children: [
-                        ExpandedButton(
-                            btnName: "Continue",
-                            onPress: () => AppServices.pushAndRemove(
-                                const Dashboard(), context))
-                      ],
-                    )
+                    isLoading
+                        ? const CircularProgressIndicator.adaptive()
+                        : Row(
+                            children: [
+                              ExpandedButton(
+                                  btnName: "Continue",
+                                  onPress: () => onContinue())
+                            ],
+                          )
                   ],
                 ),
               ),
@@ -234,5 +240,24 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
     } else {
       null;
     }
+  }
+
+  onContinue() async {
+    setState(() => isLoading = true);
+    final db = Provider.of<AppDataController>(context, listen: false);
+    final users = db.getUsers;
+    Map<String, dynamic> data = {
+      "userName": _nameController.text.trim(),
+      "about": _aboutController.text.isEmpty
+          ? "Hey! there I am using ${AppConfig.appName}"
+          : _aboutController.text.trim(),
+      "phoneNumber": users
+          .where((element) => element.uid == db.getcurrentUid)
+          .first
+          .phoneNumber
+    };
+    await FirebaseController().addUserProfile(data, context);
+    setState(() => isLoading = false);
+    AppServices.pushAndRemove(const Dashboard(), context);
   }
 }

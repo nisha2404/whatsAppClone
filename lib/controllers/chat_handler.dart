@@ -7,8 +7,7 @@ import 'package:provider/provider.dart';
 class ChatHandler {
   onMsgSend(BuildContext context, DatabaseEvent event) {
     final db = Provider.of<AppDataController>(context, listen: false);
-    final msgId = event.snapshot.key.toString();
-    final chats = event.snapshot.value;
-    db.addChat(ChatModel.fromChat(chats as Map<Object?, Object?>, msgId));
+    db.addChat(ChatModel.fromChat(event.snapshot.value as Map<Object?, Object?>,
+        event.snapshot.key.toString()));
   }
 }

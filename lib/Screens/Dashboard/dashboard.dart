@@ -5,6 +5,7 @@ import 'package:chatting_app/Screens/Dashboard/community/community_view_tab.dart
 import 'package:chatting_app/Screens/Dashboard/status/status_view_tab.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/base_getters.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -21,6 +22,8 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
+  final _firebase = FirebaseDatabase.instance;
+  final dbController = FirebaseController();
   List<Widget> tabs = [
     Tab(
       icon: Image.asset(AppIcons.communityIcon,
@@ -30,6 +33,34 @@ class _DashboardState extends State<Dashboard> {
     const Tab(child: Text("Status", style: GetTextTheme.sf16_bold)),
     const Tab(child: Text("Calls", style: GetTextTheme.sf16_bold)),
   ];
+
+  List<PopupMenuItem> popupOptions() {
+    return [
+      PopupMenuItem(onTap: () => {}, child: const Text("New Group")),
+      PopupMenuItem(onTap: () => {}, child: const Text("New Broadcast")),
+      PopupMenuItem(onTap: () => {}, child: const Text("Linked Devices")),
+      PopupMenuItem(onTap: () => {}, child: const Text("Starred messages")),
+      PopupMenuItem(onTap: () => {}, child: const Text("Payments")),
+      PopupMenuItem(onTap: () => {}, child: const Text("Settings")),
+      PopupMenuItem(
+          height: 40.h,
+          onTap: () => FirebaseController().logOut(context),
+          child: const Text("Logout")),
+    ];
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    final path = _firebase.ref("chatRoom");
+    path.onChildAdded.listen((event) {
+      print("On Chatroom Created");
+      print(event.snapshot.value);
+    });
+    path.onChildChanged
+        .listen((event) => dbController.setLastMsg(event, context));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,14 +98,8 @@ class _DashboardState extends State<Dashboard> {
                             splashRadius: 20.r,
                             icon: const Icon(Icons.search)),
                         PopupMenuButton(
-                            position: PopupMenuPosition.under,
-                            itemBuilder: (context) => [
-                                  PopupMenuItem(
-                                      height: 30.h,
-                                      onTap: () =>
-                                          FirebaseController().logOut(context),
-                                      child: const Text("Logout"))
-                                ])
+                            position: PopupMenuPosition.over,
+                            itemBuilder: (context) => popupOptions())
                       ],
                       expandedHeight: 120.h,
                       bottom: TabBar(

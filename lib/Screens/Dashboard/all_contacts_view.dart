@@ -79,8 +79,7 @@ class _AllContactsViewState extends State<AllContactsView> {
                           child: Image.asset(AppImages.avatarPlaceholder,
                               fit: BoxFit.cover),
                         )),
-                    subtitle: Text(
-                        "If God is a programmer 💫✨💫 then there is no confusion Devil 👿👿 is a hacker.",
+                    subtitle: Text(users[i].aboutUser,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GetTextTheme.sf12_regular

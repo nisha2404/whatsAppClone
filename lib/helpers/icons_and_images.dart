@@ -5,8 +5,8 @@ class AppIcons {
 
 // all types of app Logos are stored in AppLogos
 class AppLogos {
-  static const String whatsAppLogo = "assets/whatsapp.png";
-  static const String whatsAppSplashLogo = "assets/whatsApp_splash.png";
+  static const String logo = "assets/logo.png";
+  static const String splashLogo = "assets/splashIcon.png";
 }
 
 // all images used in the app are stored in thee AppImages

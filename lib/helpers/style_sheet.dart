@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 
 // all the colors used in the app are stored in AppColors
 class AppColors {
-  static const Color primaryColor = Color(0xff008069);
+  static const Color primaryColor = Color(0xffb63336);
   static const Color greenColor = Color(0xff39ae41);
-  static const Color green20 = Color(0xffe7ffdb);
+  static const Color orange40 = Color(0xfffff6c3);
   static const Color whiteColor = Colors.white;
   static const Color blackColor = Colors.black;
   static const Color orangeColor = Color(0xFFF76c0F);

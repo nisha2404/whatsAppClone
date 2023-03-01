@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:chatting_app/Screens/Auth/add_profile_info.dart';
 import 'package:chatting_app/Screens/Auth/login.dart';
 import 'package:chatting_app/Screens/Auth/otp_view.dart';
@@ -43,16 +45,32 @@ class FirebaseController {
 
   verifyCode(String code, String phoneNumber, BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
+    final users = db.getUsers;
     db.setLoader(true);
     PhoneAuthCredential credential = PhoneAuthProvider.credential(
         verificationId: receivedVerificationId, smsCode: code);
-    await auth.signInWithCredential(credential).then((value) {
+    await auth.signInWithCredential(credential).then((value) async {
       final path = database.ref("users/${value.user!.uid}");
-      path.set({"phoneNumber": phoneNumber});
+      await path.set({"phoneNumber": phoneNumber}).then(
+          (value) => getAllUsers(context));
       db.setCurrentUid(value.user!.uid);
-      AppServices.pushAndRemove(const AddProfileInfo(), context);
+
+      AppServices.pushAndRemove(
+          users
+                  .where((element) => element.uid == value.user!.uid)
+                  .first
+                  .userName
+                  .isEmpty
+              ? const AddProfileInfo()
+              : const Dashboard(),
+          context);
     });
     db.setLoader(false);
+  }
+
+  addUserProfile(Map<String, dynamic> data, BuildContext context) async {
+    final path = database.ref("users/${auth.currentUser!.uid}");
+    await path.set(data);
   }
 
   logOut(BuildContext context) async {
@@ -68,6 +86,7 @@ class FirebaseController {
     auth.currentUser != null
         ? {
             db.setCurrentUid(auth.currentUser!.uid),
+            getAllUsers(context),
             AppServices.fadeTransitionNavigation(context, const Dashboard())
           }
         : AppServices.fadeTransitionNavigation(context, const LoginScreen());
@@ -130,11 +149,64 @@ class FirebaseController {
     return chat.sender == auth.currentUser!.uid;
   }
 
+  ChatModel getLastMsg(DataSnapshot chats) {
+    print((chats.value as Map<Object?, Object?>)['chats']);
+    var lastmsg =
+        ((chats.value as Map<Object?, Object?>)['chats'] as List).last;
+    return ChatModel.fromChat(
+        lastmsg.value as Map<Object?, Object?>, lastmsg.key.toString());
+  }
+
+  setLastMsg(DatabaseEvent event, BuildContext context) async {
+    final db = Provider.of<AppDataController>(context, listen: false);
+    final chatroomKey = event.snapshot.key.toString();
+    final msgSnapshot =
+        await database.ref("chatRoom/$chatroomKey/chats").orderByValue().get();
+    if (msgSnapshot.exists) {
+      final lastMsg = msgSnapshot.children.last;
+      print(lastMsg);
+      db.setLastMsg(ChatRoomModel.fromChatrooms(
+          event.snapshot.value as Map<Object?, Object?>,
+          chatroomKey,
+          chatroomKey
+              .split("_vs_")
+              .firstWhere((element) => element != auth.currentUser!.uid)
+              .toString(),
+          ChatModel.fromChat(
+              lastMsg.value as Map<Object?, Object?>, lastMsg.key.toString())));
+    }
+  }
+
   getAllChatRooms(BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
-    await database
-        .ref("chatRoom")
-        .get()
-        .then((value) => db.addAllchatRooms(value.children.toList()));
+    final chatroomPath = database.ref("chatRoom");
+
+    var snapshot = await chatroomPath.get();
+    if (snapshot.exists) {
+      final List<ChatRoomModel> rooms = [];
+      final chatroomList = snapshot.children
+          .where((e) => e.key.toString().contains(auth.currentUser!.uid))
+          .toList();
+      for (var room in chatroomList) {
+        final msgPath = database.ref("chatRoom/${room.key}/chats");
+        final msgSnapshot = await msgPath.get();
+        if (msgSnapshot.exists) {
+          final lastmsg = msgSnapshot.children.last;
+          rooms.add(ChatRoomModel.fromChatrooms(
+              room.value as Map<Object?, Object?>,
+              room.key.toString(),
+              room.key
+                  .toString()
+                  .split("_vs_")
+                  .firstWhere((element) => element != auth.currentUser!.uid)
+                  .toString(),
+              ChatModel.fromChat(lastmsg.value as Map<Object?, Object?>,
+                  lastmsg.key.toString())));
+        }
+      }
+      db.addAllchatRooms(rooms);
+    } else {
+      null;
+    }
   }
 }

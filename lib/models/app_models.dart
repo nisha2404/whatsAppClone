@@ -1,9 +1,15 @@
+import 'package:firebase_auth/firebase_auth.dart';
+
+final auth = FirebaseAuth.instance;
+
 class UserModel {
   String uid;
-  String phoneNumber;
-  UserModel(this.uid, this.phoneNumber);
+  String phoneNumber, userName, aboutUser;
+  UserModel(this.uid, this.phoneNumber, this.userName, this.aboutUser);
   UserModel.fromUser(Map<Object?, Object?> json, this.uid)
-      : phoneNumber = json['phoneNumber'].toString();
+      : phoneNumber = json['phoneNumber'].toString(),
+        userName = json['userName'].toString(),
+        aboutUser = json['about'].toString();
 }
 
 class ChatModel {
@@ -20,4 +26,15 @@ class ChatModel {
         msg = json['message'].toString(),
         sendAt = DateTime.parse(json['sendAt'].toString()),
         isSeen = json['seen'].toString() == "false" ? false : true;
+}
+
+class ChatRoomModel {
+  String chatroomId, targetUser;
+  ChatModel lastMsg;
+  bool isGroupMsg;
+  ChatRoomModel(
+      this.chatroomId, this.targetUser, this.lastMsg, this.isGroupMsg);
+  ChatRoomModel.fromChatrooms(Map<Object?, Object?> json, this.chatroomId,
+      this.targetUser, this.lastMsg)
+      : isGroupMsg = json['isGroup'].toString() == "true" ? true : false;
 }

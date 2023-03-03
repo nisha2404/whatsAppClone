@@ -1,6 +1,9 @@
 import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../controllers/app_data_controller.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -39,10 +42,19 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final db = Provider.of<AppDataController>(context);
     return Scaffold(
       body: Center(
-        child: Image.asset(AppLogos.splashLogo,
-            height: _animation.value * 250, width: _animation.value * 250),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(AppLogos.splashLogo,
+                height: _animation.value * 250, width: _animation.value * 250),
+            db.showLoader
+                ? const CircularProgressIndicator.adaptive()
+                : const SizedBox()
+          ],
+        ),
       ),
     );
   }

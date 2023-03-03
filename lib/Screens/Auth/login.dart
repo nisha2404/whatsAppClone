@@ -25,6 +25,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _phoneController = TextEditingController();
 
   String countryName = "India";
+
+  @override
+  void initState() {
+    super.initState();
+    if (!mounted) return;
+    setState(() => isLoading = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,7 +140,6 @@ class _LoginScreenState extends State<LoginScreen> {
       await FirebaseController().verifyPhone(
           context, "${_phoneCodecontroller.text}${_phoneController.text}");
       _phoneController.clear();
-      setState(() => isLoading = false);
     } else {
       AppServices.showToast(
           "Invalid Format! please enter a valid mobile number");

@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, avoid_print
 
 import 'package:chatting_app/Screens/Auth/add_profile_info.dart';
 import 'package:chatting_app/Screens/Auth/login.dart';
@@ -13,11 +13,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 String receivedVerificationId = "";
+final auth = FirebaseAuth.instance;
+final database = FirebaseDatabase.instance;
 
 class FirebaseController {
-  final auth = FirebaseAuth.instance;
-  final database = FirebaseDatabase.instance;
-
   verifyPhone(BuildContext context, String phoneNumber) async {
     final db = Provider.of<AppDataController>(context, listen: false);
     try {
@@ -45,48 +44,93 @@ class FirebaseController {
 
   verifyCode(String code, String phoneNumber, BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
-    final users = db.getUsers;
     db.setLoader(true);
     PhoneAuthCredential credential = PhoneAuthProvider.credential(
         verificationId: receivedVerificationId, smsCode: code);
     await auth.signInWithCredential(credential).then((value) async {
       final path = database.ref("users/${value.user!.uid}");
-      await path.set({"phoneNumber": phoneNumber}).then(
-          (value) => getAllUsers(context));
-      db.setCurrentUid(value.user!.uid);
+      await path.set({
+        "phoneNumber": phoneNumber,
+        "profileImg": "",
+        "userName": "",
+        "uid": value.user!.uid,
+        "about": "",
+        "isActive": true,
+        "lastSeen": DateTime.now().millisecondsSinceEpoch
+      }).then((value) => getAllUsers(context));
 
-      AppServices.pushAndRemove(
-          users
-                  .where((element) => element.uid == value.user!.uid)
-                  .first
-                  .userName
-                  .isEmpty
-              ? const AddProfileInfo()
-              : const Dashboard(),
-          context);
+      if (value.user!.phoneNumber!.isNotEmpty) {
+        AppServices.pushAndRemove(
+            db.getUsers.any((element) => element.uid == element.uid)
+                ? const AddProfileInfo()
+                : const Dashboard(),
+            context);
+      }
     });
     db.setLoader(false);
   }
 
   addUserProfile(Map<String, dynamic> data, BuildContext context) async {
     final path = database.ref("users/${auth.currentUser!.uid}");
-    await path.set(data);
+    await path.update(data);
   }
 
   logOut(BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
     await auth.signOut().then((value) => {
-          db.resetUid(),
+          db.resetChatRooms(),
           AppServices.pushAndRemove(const LoginScreen(), context)
         });
   }
 
-  isCurrentUser(BuildContext context) {
+  msgIsSeen(List<ChatModel> chats, String id) async {
+    final unSeenchats = chats.where((element) => element.isSeen == false);
+    for (var chat in unSeenchats) {
+      if (auth.currentUser!.uid == chat.receiver) {
+        await database
+            .ref("chatRoom/${createChatRoomId(id)}/chats/${chat.msgId}")
+            .update({"seen": true});
+      }
+    }
+  }
+
+  // updateUserPreferences() async {
+  //   Map<String, dynamic> online = {
+  //     'isActive': true,
+  //     'lastSeen': DateTime.now().millisecondsSinceEpoch,
+  //   };
+  //   Map<String, dynamic> offline = {
+  //     'isActive': false,
+  //     'lastSeen': DateTime.now().millisecondsSinceEpoch,
+  //   };
+  //   final connectedRef = database.ref('.info/connected');
+
+  //   connectedRef.onValue.listen((event) async {
+  //     final isConnected = event.snapshot.value as bool? ?? false;
+  //     if (isConnected) {
+  //       await database
+  //           .ref()
+  //           .child("users")
+  //           .child(auth.currentUser!.uid)
+  //           .update(online);
+  //     } else {
+  //       await database
+  //           .ref()
+  //           .child("users")
+  //           .child(auth.currentUser!.uid)
+  //           .onDisconnect()
+  //           .update(offline);
+  //     }
+  //   });
+  // }
+
+  isCurrentUser(BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
     auth.currentUser != null
         ? {
-            db.setCurrentUid(auth.currentUser!.uid),
-            getAllUsers(context),
+            db.setLoader(true),
+            await getAllUsers(context),
+            db.setLoader(false),
             AppServices.fadeTransitionNavigation(context, const Dashboard())
           }
         : AppServices.fadeTransitionNavigation(context, const LoginScreen());
@@ -95,16 +139,16 @@ class FirebaseController {
   Future<void> getAllUsers(BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
     try {
-      db.setLoader(true);
+      // db.setLoader(true);
       await database.ref("users").get().then((value) {
         if (value.exists) {
           db.setUsers(value.children
               .map((e) => UserModel.fromUser(
                   e.value as Map<Object?, Object?>, e.key.toString()))
               .toList());
-          db.setLoader(false);
+          // db.setLoader(false);
         } else {
-          db.setLoader(false);
+          // db.setLoader(false);
         }
       });
     } catch (e) {
@@ -149,12 +193,9 @@ class FirebaseController {
     return chat.sender == auth.currentUser!.uid;
   }
 
-  ChatModel getLastMsg(DataSnapshot chats) {
-    print((chats.value as Map<Object?, Object?>)['chats']);
-    var lastmsg =
-        ((chats.value as Map<Object?, Object?>)['chats'] as List).last;
-    return ChatModel.fromChat(
-        lastmsg.value as Map<Object?, Object?>, lastmsg.key.toString());
+  getChats(String chatRoomKey) async {
+    final path = database.ref("chatRoom/$chatRoomKey/chats");
+    await path.get();
   }
 
   setLastMsg(DatabaseEvent event, BuildContext context) async {
@@ -164,7 +205,6 @@ class FirebaseController {
         await database.ref("chatRoom/$chatroomKey/chats").orderByValue().get();
     if (msgSnapshot.exists) {
       final lastMsg = msgSnapshot.children.last;
-      print(lastMsg);
       db.setLastMsg(ChatRoomModel.fromChatrooms(
           event.snapshot.value as Map<Object?, Object?>,
           chatroomKey,
@@ -177,12 +217,32 @@ class FirebaseController {
     }
   }
 
+  setNewChatRoom(DatabaseEvent event, BuildContext context) async {
+    final db = Provider.of<AppDataController>(context, listen: false);
+    final chatRoomKey = event.snapshot.key;
+    final message =
+        await database.ref("chatRoom/$chatRoomKey/chats").orderByValue().get();
+    if (message.exists) {
+      final lastMsg = message.children.last;
+      db.setLastMsg(ChatRoomModel.fromChatrooms(
+          event.snapshot.value as Map<Object?, Object?>,
+          event.snapshot.key.toString(),
+          event.snapshot.key
+              .toString()
+              .split("_vs_")
+              .firstWhere((element) => element != auth.currentUser!.uid),
+          ChatModel.fromChat(
+              lastMsg.value as Map<Object?, Object?>, lastMsg.key.toString())));
+      getAllUsers(context);
+    }
+  }
+
   getAllChatRooms(BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
     final chatroomPath = database.ref("chatRoom");
-
     var snapshot = await chatroomPath.get();
     if (snapshot.exists) {
+      db.setLoader(true);
       final List<ChatRoomModel> rooms = [];
       final chatroomList = snapshot.children
           .where((e) => e.key.toString().contains(auth.currentUser!.uid))
@@ -205,7 +265,9 @@ class FirebaseController {
         }
       }
       db.addAllchatRooms(rooms);
+      db.setLoader(false);
     } else {
+      db.setLoader(false);
       null;
     }
   }

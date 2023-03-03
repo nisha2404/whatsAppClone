@@ -41,6 +41,16 @@ class AppServices {
                 child: child),
       ));
 
+  static pushAndReplace(Widget screen, BuildContext context) =>
+      Navigator.of(context).pushReplacement(PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => screen,
+          transitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              CupertinoPageTransition(
+                  primaryRouteAnimation: animation,
+                  secondaryRouteAnimation: secondaryAnimation,
+                  linearTransition: true,
+                  child: child)));
   // navigate to next screen and remove all the screens behind
   static pushAndRemove(Widget screen, BuildContext context) =>
       Navigator.of(context).pushAndRemoveUntil(

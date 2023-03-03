@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatting_app/Screens/Dashboard/Chats/chatroom.dart';
 import 'package:chatting_app/controllers/app_data_controller.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
+import '../../components/shimmers/profile_img_shimmer.dart';
 import '../../helpers/icons_and_images.dart';
 
 class AllContactsView extends StatefulWidget {
@@ -28,7 +30,7 @@ class _AllContactsViewState extends State<AllContactsView> {
   Widget build(BuildContext context) {
     final db = Provider.of<AppDataController>(context);
     final users = db.getUsers
-        .where((element) => element.uid != db.getcurrentUid)
+        .where((element) => element.uid != auth.currentUser!.uid)
         .toList();
     return Scaffold(
       appBar: AppBar(
@@ -65,8 +67,8 @@ class _AllContactsViewState extends State<AllContactsView> {
                 shrinkWrap: true,
                 itemBuilder: (context, i) {
                   return ListTile(
-                    onTap: () =>
-                        AppServices.pushTo(ChatRoom(user: users[i]), context),
+                    onTap: () => AppServices.pushAndReplace(
+                        ChatRoom(user: users[i]), context),
                     title: Text(users[i].phoneNumber,
                         style: GetTextTheme.sf18_bold),
                     leading: Container(
@@ -76,8 +78,14 @@ class _AllContactsViewState extends State<AllContactsView> {
                         decoration: const BoxDecoration(shape: BoxShape.circle),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(400.r),
-                          child: Image.asset(AppImages.avatarPlaceholder,
-                              fit: BoxFit.cover),
+                          child: users[i].image == ""
+                              ? Image.asset(AppImages.avatarPlaceholder,
+                                  fit: BoxFit.cover)
+                              : CachedNetworkImage(
+                                  imageUrl: users[i].image,
+                                  placeholder: (context, url) =>
+                                      ProfileImageShimmer(
+                                          height: 150, width: 150)),
                         )),
                     subtitle: Text(users[i].aboutUser,
                         maxLines: 1,

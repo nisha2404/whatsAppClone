@@ -6,31 +6,16 @@ dynamic preferences;
 
 class AppDataController extends ChangeNotifier {
   bool _loading = false;
-  String _currentUid = "";
+  // String _currentUid = "";
 
   String getTimeFormat(DateTime time) {
     if (time.day == DateTime.now().day) {
       return DateFormat('hh:mm a').format(time);
-      //  DateFormat.jm()
-      //     .format(DateFormat("hh:mm:ss")
-      //         .parse("${time.hour}:${time.minute}:${time.second}"))
-      //     .toString();
     } else if (time.day == DateTime.now().day - 1) {
       return "Yesterday";
     } else {
       return DateFormat("dd-MM-yyyy").format(time).toString();
     }
-  }
-
-  String get getcurrentUid => _currentUid;
-  setCurrentUid(String uid) {
-    _currentUid = uid;
-    notifyListeners();
-  }
-
-  resetUid() {
-    _currentUid = "";
-    notifyListeners();
   }
 
   bool get showLoader => _loading;
@@ -72,6 +57,11 @@ class AppDataController extends ChangeNotifier {
 
   addAllchatRooms(List<ChatRoomModel> chatRooms) {
     _chatRooms = chatRooms;
+    notifyListeners();
+  }
+
+  resetChatRooms() {
+    _chatRooms = [];
     notifyListeners();
   }
 

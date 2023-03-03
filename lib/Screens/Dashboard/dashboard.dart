@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:chatting_app/Screens/Dashboard/Chats/chat_view_tab.dart';
+import 'package:chatting_app/Screens/Dashboard/Settings/settings.dart';
 import 'package:chatting_app/Screens/Dashboard/all_contacts_view.dart';
 import 'package:chatting_app/Screens/Dashboard/calls/call_view_tab.dart';
 import 'package:chatting_app/Screens/Dashboard/community/community_view_tab.dart';
@@ -21,7 +24,7 @@ class Dashboard extends StatefulWidget {
   State<Dashboard> createState() => _DashboardState();
 }
 
-class _DashboardState extends State<Dashboard> {
+class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
   final _firebase = FirebaseDatabase.instance;
   final dbController = FirebaseController();
   List<Widget> tabs = [
@@ -34,6 +37,8 @@ class _DashboardState extends State<Dashboard> {
     const Tab(child: Text("Calls", style: GetTextTheme.sf16_bold)),
   ];
 
+  late Timer timer;
+
   List<PopupMenuItem> popupOptions() {
     return [
       PopupMenuItem(onTap: () => {}, child: const Text("New Group")),
@@ -41,9 +46,10 @@ class _DashboardState extends State<Dashboard> {
       PopupMenuItem(onTap: () => {}, child: const Text("Linked Devices")),
       PopupMenuItem(onTap: () => {}, child: const Text("Starred messages")),
       PopupMenuItem(onTap: () => {}, child: const Text("Payments")),
-      PopupMenuItem(onTap: () => {}, child: const Text("Settings")),
       PopupMenuItem(
-          height: 40.h,
+          onTap: () => {AppServices.pushTo(const SettingsView(), context)},
+          child: const Text("Settings")),
+      PopupMenuItem(
           onTap: () => FirebaseController().logOut(context),
           child: const Text("Logout")),
     ];
@@ -51,15 +57,49 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     final path = _firebase.ref("chatRoom");
     path.onChildAdded.listen((event) {
-      print("On Chatroom Created");
-      print(event.snapshot.value);
+      dbController.setNewChatRoom(event, context);
     });
     path.onChildChanged
         .listen((event) => dbController.setLastMsg(event, context));
+    timer =
+        Timer.periodic(const Duration(minutes: 1), (timer) => setState(() {}));
+    WidgetsBinding.instance.addObserver(this);
+    setStatus(true);
+  }
+
+  @override
+  void dispose() {
+    timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setStatus(true);
+    } else {
+      setStatus(false);
+    }
+  }
+
+  void setStatus(bool status) async {
+    status == true
+        ? await database
+            .ref()
+            .child("users")
+            .child(auth.currentUser!.uid)
+            .update({"isActive": status})
+        : await database
+            .ref()
+            .child("users")
+            .child(auth.currentUser!.uid)
+            .update({
+            "isActive": status,
+            "lastSeen": DateTime.now().millisecondsSinceEpoch
+          });
   }
 
   @override
@@ -90,7 +130,8 @@ class _DashboardState extends State<Dashboard> {
                           statusBarColor: AppColors.primaryColor),
                       actions: [
                         IconButton(
-                            onPressed: () {},
+                            onPressed: () => AppServices.pushTo(
+                                const SettingsView(), context),
                             splashRadius: 20.r,
                             icon: const Icon(Icons.camera_alt_outlined)),
                         IconButton(

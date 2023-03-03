@@ -1,24 +1,25 @@
-// ignore_for_file: import_of_legacy_library_into_null_safe
+// ignore_for_file: import_of_legacy_library_into_null_safe, use_build_context_synchronously
 
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatting_app/Screens/Dashboard/dashboard.dart';
 import 'package:chatting_app/app_config.dart';
 import 'package:chatting_app/components/expanded_button.dart';
 import 'package:chatting_app/components/help_popup_button.dart';
+import 'package:chatting_app/components/shimmers/profile_img_shimmer.dart';
 import 'package:chatting_app/components/underline_input_border_textfield.dart';
-import 'package:chatting_app/controllers/app_data_controller.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/base_getters.dart';
 import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:chatting_app/helpers/style_sheet.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
 
 class AddProfileInfo extends StatefulWidget {
   const AddProfileInfo({super.key});
@@ -49,9 +50,12 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
   final ImagePicker _picker = ImagePicker();
 
   bool isLoading = false;
+  bool isUploadImage = false;
 
   CroppedFile? croppedProfileImg;
   XFile? profileImage;
+
+  String imageUrl = "";
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -98,20 +102,27 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
                         style: GetTextTheme.sf14_medium
                             .copyWith(color: AppColors.grey150)),
                     AppServices.addHeight(40.h),
-                    croppedProfileImg == null
-                        ? GestureDetector(
-                            onTap: () => onImagePick(),
-                            child: const CircleAvatar(
-                              radius: 60,
-                              backgroundImage:
-                                  AssetImage(AppImages.avatarPlaceholder),
-                            ),
-                          )
-                        : CircleAvatar(
-                            radius: 60,
-                            backgroundImage:
-                                FileImage(File(croppedProfileImg!.path)),
-                          ),
+                    isUploadImage
+                        ? const CircularProgressIndicator()
+                        : imageUrl == ""
+                            ? GestureDetector(
+                                onTap: () => onImagePick(),
+                                child: const CircleAvatar(
+                                  radius: 60,
+                                  backgroundImage:
+                                      AssetImage(AppImages.avatarPlaceholder),
+                                ),
+                              )
+                            : ClipRRect(
+                                borderRadius: BorderRadius.circular(1000.r),
+                                child: CachedNetworkImage(
+                                    height: 120.sp,
+                                    width: 120.sp,
+                                    imageUrl: imageUrl,
+                                    placeholder: (context, url) =>
+                                        ProfileImageShimmer(
+                                            height: 120, width: 120)),
+                              ),
                     AppServices.addHeight(20.h),
                     Row(
                       children: [
@@ -237,24 +248,41 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
 
     if (croppedImage != null) {
       setState(() => croppedProfileImg = croppedImage);
+      await uploadImage();
     } else {
       null;
     }
   }
 
+  uploadImage() async {
+    setState(() => isUploadImage = true);
+    String uniqueFileName = DateTime.now().millisecondsSinceEpoch.toString();
+    Reference referenceRoot =
+        FirebaseStorage.instance.ref().child('images').child(uniqueFileName);
+
+    try {
+      await referenceRoot.putFile(File(croppedProfileImg!.path));
+      imageUrl = await referenceRoot.getDownloadURL();
+      setState(() => isUploadImage = false);
+    } catch (e) {
+      setState(() => isUploadImage = false);
+      print(e);
+    }
+  }
+
   onContinue() async {
     setState(() => isLoading = true);
-    final db = Provider.of<AppDataController>(context, listen: false);
-    final users = db.getUsers;
     Map<String, dynamic> data = {
+      "isActive": true,
+      "groupId": [],
+      "lastSeen": DateTime.now().millisecondsSinceEpoch,
+      "uid": auth.currentUser!.uid,
       "userName": _nameController.text.trim(),
+      "profileImg": imageUrl == "" ? "" : imageUrl,
       "about": _aboutController.text.isEmpty
           ? "Hey! there I am using ${AppConfig.appName}"
           : _aboutController.text.trim(),
-      "phoneNumber": users
-          .where((element) => element.uid == db.getcurrentUid)
-          .first
-          .phoneNumber
+      "phoneNumber": auth.currentUser!.phoneNumber
     };
     await FirebaseController().addUserProfile(data, context);
     setState(() => isLoading = false);

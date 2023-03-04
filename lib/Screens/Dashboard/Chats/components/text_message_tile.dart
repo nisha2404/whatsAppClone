@@ -40,11 +40,7 @@ class TextMessageTile extends StatelessWidget {
                 Container(
                   constraints: BoxConstraints(
                       maxWidth: AppServices.getScreenWidth(context) - 80.w),
-                  child: Text(
-                      chat.msgType == "imageWithText"
-                          ? chat.msg.split("__").last
-                          : chat.msg,
-                      style: GetTextTheme.sf16_regular),
+                  child: Text(chat.msg, style: GetTextTheme.sf16_regular),
                 ),
                 AppServices.addWidth(10.w),
                 Row(

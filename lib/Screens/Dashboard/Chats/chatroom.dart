@@ -3,6 +3,7 @@
 import 'dart:io';
 
 import 'package:chatting_app/Screens/Dashboard/Chats/components/image_message_tile.dart';
+import 'package:chatting_app/Screens/Dashboard/Chats/components/image_with_caption_msgtile.dart';
 import 'package:chatting_app/Screens/Dashboard/Chats/components/text_message_tile.dart';
 import 'package:chatting_app/controllers/app_data_controller.dart';
 import 'package:chatting_app/controllers/chat_handler.dart';
@@ -40,7 +41,10 @@ class _ChatRoomState extends State<ChatRoom> {
 
   getStuff() async {
     // final db = Provider.of<AppDataController>(context, listen: false);
-    FirebaseController().resetMessages(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Add Your Code here.
+      FirebaseController().resetMessages(context);
+    });
     database
         .ref(
             "chatRoom/${FirebaseController().createChatRoomId(widget.user.uid)}/chats")
@@ -98,6 +102,8 @@ class _ChatRoomState extends State<ChatRoom> {
 
   String msgType = "text";
   bool isShowStackContainer = false;
+
+  bool showDeleteButton = false;
 
   @override
   Widget build(BuildContext context) {
@@ -220,16 +226,15 @@ class _ChatRoomState extends State<ChatRoom> {
                                           .format(chats[i].sendAt)))
                                   : const SizedBox(),
                               chats[i].msgType == "image"
-                                  ? ImageMessageTile(
-                                      chat: chats[i], controller: db)
+                                  ? GestureDetector(
+                                      onLongPress: () => setState(
+                                          () => showDeleteButton = true),
+                                      child: ImageMessageTile(
+                                          chat: chats[i], controller: db),
+                                    )
                                   : chats[i].msgType == "imageWithText"
-                                      ? Column(children: [
-                                          ImageMessageTile(
-                                              chat: chats[i], controller: db),
-                                          AppServices.addHeight(5.sp),
-                                          TextMessageTile(
-                                              chat: chats[i], controller: db)
-                                        ])
+                                      ? ImageWithCaptionMsgTile(
+                                          chat: chats[i], controller: db)
                                       : TextMessageTile(
                                           chat: chats[i], controller: db)
                             ],
@@ -337,7 +342,7 @@ class _ChatRoomState extends State<ChatRoom> {
                                           "type": "text",
                                           "sendAt":
                                               DateTime.now().toIso8601String(),
-                                          "seen": false
+                                          "seen": false,
                                         },
                                         widget.user.uid,
                                       )
@@ -449,8 +454,11 @@ class _ChatRoomState extends State<ChatRoom> {
       isUploadImage = true;
     });
     String uniqueFileName = DateTime.now().millisecondsSinceEpoch.toString();
-    Reference referenceRoot =
-        FirebaseStorage.instance.ref().child('images').child(uniqueFileName);
+    Reference referenceRoot = FirebaseStorage.instance
+        .ref()
+        .child('images')
+        .child("chatImages")
+        .child(uniqueFileName);
 
     try {
       await referenceRoot.putFile(File(croppedImg!.path));
@@ -463,7 +471,7 @@ class _ChatRoomState extends State<ChatRoom> {
             : imageUrl,
         "type": _msgCtrl.text.isNotEmpty ? "imageWithText" : "image",
         "sendAt": DateTime.now().toIso8601String(),
-        "seen": false
+        "seen": false,
       }, widget.user.uid);
 
       setState(() {
@@ -476,4 +484,6 @@ class _ChatRoomState extends State<ChatRoom> {
       print(e);
     }
   }
+
+  onDeletePress() {}
 }

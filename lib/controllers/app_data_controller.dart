@@ -33,6 +33,15 @@ class AppDataController extends ChangeNotifier {
     notifyListeners();
   }
 
+  UserModel? _currentuser;
+
+  UserModel get currentUser => _currentuser!;
+
+  addUser(UserModel user) {
+    _currentuser = user;
+    notifyListeners();
+  }
+
   List<ChatModel> _chats = [];
 
   List<ChatModel> get getIndividualChats => _chats;

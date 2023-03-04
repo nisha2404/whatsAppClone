@@ -3,6 +3,8 @@
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:chatting_app/Screens/Dashboard/Settings/views/profile/update_userabout_dialog.dart';
+import 'package:chatting_app/Screens/Dashboard/Settings/views/profile/update_username_dialog.dart';
 import 'package:chatting_app/app_config.dart';
 import 'package:chatting_app/components/shimmers/profile_img_shimmer.dart';
 import 'package:chatting_app/controllers/app_data_controller.dart';
@@ -41,6 +43,8 @@ class _ProfileViewState extends State<ProfileView> {
     final db = Provider.of<AppDataController>(context);
     final user = db.getUsers.firstWhere((e) => e.uid == auth.currentUser!.uid);
     return Scaffold(
+      backgroundColor: AppColors.whiteColor,
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: const Text("Profile", style: GetTextTheme.sf18_bold),
         systemOverlayStyle: const SystemUiOverlayStyle(
@@ -60,31 +64,35 @@ class _ProfileViewState extends State<ProfileView> {
                   child: Container(
                     height: 150.sp,
                     width: 150.sp,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                    ),
-                    child: ClipRRect(
-                        borderRadius: BorderRadius.circular(1000.r),
-                        child: imgUrl == ""
-                            ? (user.image == ""
-                                ? Image.asset(AppImages.avatarPlaceholder)
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isUploadImage
+                            ? AppColors.grey100
+                            : AppColors.whiteColor),
+                    child: isUploadImage
+                        ? const CircularProgressIndicator.adaptive()
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(1000.r),
+                            child: imgUrl == ""
+                                ? (user.image == ""
+                                    ? Image.asset(AppImages.avatarPlaceholder)
+                                    : CachedNetworkImage(
+                                        imageUrl: user.image,
+                                        placeholder: (context, url) =>
+                                            ProfileImageShimmer(
+                                                height: 150, width: 150)))
                                 : CachedNetworkImage(
-                                    imageUrl: user.image,
+                                    imageUrl: imgUrl,
                                     placeholder: (context, url) =>
                                         ProfileImageShimmer(
-                                            height: 150, width: 150)))
-                            : CachedNetworkImage(
-                                imageUrl: imgUrl,
-                                placeholder: (context, url) =>
-                                    ProfileImageShimmer(
-                                        height: 150, width: 150))),
+                                            height: 150, width: 150))),
                   ),
                 ),
                 Positioned(
                   bottom: 1,
                   right: 1,
                   child: GestureDetector(
-                    onTap: () => onImagePick(),
+                    onTap: () => onImagePick(user.image),
                     child: Container(
                       width: 50.sp,
                       height: 50.sp,
@@ -107,7 +115,13 @@ class _ProfileViewState extends State<ProfileView> {
             ),
             AppServices.addHeight(30.sp),
             detail_tile(
-                () => {}, true, AppIcons.profileIcon, "Name", user.userName),
+                () => showDialog(
+                    context: context,
+                    builder: (context) => UpdateUsernameDialog()),
+                true,
+                AppIcons.profileIcon,
+                "Name",
+                user.userName),
             AppServices.addHeight(10.sp),
             Text(
                 "This is not your username or pin. This name will be visible to your ${AppConfig.appName} contacts.",
@@ -117,7 +131,13 @@ class _ProfileViewState extends State<ProfileView> {
             const Divider(thickness: 1, color: AppColors.grey50),
             AppServices.addHeight(8.sp),
             detail_tile(
-                () => {}, true, AppIcons.infoIcon, "About", user.aboutUser),
+                () => showDialog(
+                    context: context,
+                    builder: (context) => UpdateuserAboutDialog()),
+                true,
+                AppIcons.infoIcon,
+                "About",
+                user.aboutUser),
             AppServices.addHeight(8.sp),
             const Divider(thickness: 1, color: AppColors.grey50),
             AppServices.addHeight(8.sp),
@@ -157,16 +177,16 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  onImagePick() async {
+  onImagePick(String imgpath) async {
     var value = await _picker.pickImage(source: ImageSource.gallery);
     if (value != null) {
-      await cropImage(value);
+      await cropImage(value, imgpath);
     } else {
       null;
     }
   }
 
-  Future<void> cropImage(XFile img) async {
+  Future<void> cropImage(XFile img, String imgPath) async {
     final croppedImage = await ImageCropper().cropImage(
         sourcePath: img.path,
         compressFormat: ImageCompressFormat.jpg,
@@ -184,14 +204,17 @@ class _ProfileViewState extends State<ProfileView> {
 
     if (croppedImage != null) {
       setState(() => croppedProfileImg = croppedImage);
-      await uploadImage();
+      await uploadImage(imgPath);
     } else {
       null;
     }
   }
 
-  uploadImage() async {
+  uploadImage(String imgPath) async {
     setState(() => isUploadImage = true);
+    final path = database.ref("users/${auth.currentUser!.uid}");
+    Reference deleteImgRef = storage.refFromURL(imgPath);
+    await deleteImgRef.delete();
     String uniqueFileName = DateTime.now().millisecondsSinceEpoch.toString();
     Reference referenceRoot =
         FirebaseStorage.instance.ref().child('images').child(uniqueFileName);
@@ -199,6 +222,7 @@ class _ProfileViewState extends State<ProfileView> {
     try {
       await referenceRoot.putFile(File(croppedProfileImg!.path));
       imgUrl = await referenceRoot.getDownloadURL();
+      path.update({"profileImg": imgUrl});
       setState(() => isUploadImage = false);
     } catch (e) {
       setState(() => isUploadImage = false);

@@ -36,11 +36,12 @@ class ChatModel {
 
 class ChatRoomModel {
   String chatroomId, targetUser;
+  UserModel userdata;
   ChatModel lastMsg;
   bool isGroupMsg;
-  ChatRoomModel(
-      this.chatroomId, this.targetUser, this.lastMsg, this.isGroupMsg);
+  ChatRoomModel(this.chatroomId, this.targetUser, this.lastMsg, this.isGroupMsg,
+      this.userdata);
   ChatRoomModel.fromChatrooms(Map<Object?, Object?> json, this.chatroomId,
-      this.targetUser, this.lastMsg)
+      this.targetUser, this.lastMsg, this.userdata)
       : isGroupMsg = json['isGroup'].toString() == "true" ? true : false;
 }

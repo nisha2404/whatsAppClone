@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:chatting_app/Screens/Dashboard/Chats/chat_view_tab.dart';
 import 'package:chatting_app/Screens/Dashboard/Settings/settings.dart';
 import 'package:chatting_app/Screens/Dashboard/all_contacts_view.dart';
@@ -37,8 +35,6 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
     const Tab(child: Text("Calls", style: GetTextTheme.sf16_bold)),
   ];
 
-  late Timer timer;
-
   List<PopupMenuItem> popupOptions() {
     return [
       PopupMenuItem(onTap: () => {}, child: const Text("New Group")),
@@ -59,21 +55,17 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     final path = _firebase.ref("chatRoom");
+    final path2 = _firebase.ref("users/${auth.currentUser!.uid}");
     path.onChildAdded.listen((event) {
       dbController.setNewChatRoom(event, context);
     });
     path.onChildChanged
         .listen((event) => dbController.setLastMsg(event, context));
-    timer =
-        Timer.periodic(const Duration(minutes: 1), (timer) => setState(() {}));
+    path2.onChildChanged.listen((event) {
+      dbController.onUserUpdated(event, context);
+    });
     WidgetsBinding.instance.addObserver(this);
     setStatus(true);
-  }
-
-  @override
-  void dispose() {
-    timer.cancel();
-    super.dispose();
   }
 
   @override

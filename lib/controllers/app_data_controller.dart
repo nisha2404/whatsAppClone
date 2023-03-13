@@ -37,7 +37,7 @@ class AppDataController extends ChangeNotifier {
 
   UserModel get currentUser => _currentuser!;
 
-  addUser(UserModel user) {
+  setCurrentUser(UserModel user) {
     _currentuser = user;
     notifyListeners();
   }

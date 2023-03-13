@@ -125,12 +125,14 @@ class FirebaseController {
     auth.currentUser != null
         ? {
             db.setLoader(true),
+            getCurrentUser(context),
             await getAllUsers(context),
             db.setLoader(false),
             AppServices.fadeTransitionNavigation(context, const Dashboard())
           }
         : AppServices.fadeTransitionNavigation(context, const LoginScreen());
   }
+
 
   Future<void> getAllUsers(BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
@@ -298,10 +300,10 @@ class FirebaseController {
     }
   }
 
-  onUserUpdated(DatabaseEvent event, BuildContext context) async {
+  getCurrentUser(BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
-    final value = event.snapshot;
-    db.addUser(UserModel.fromUser(
-        value.value as Map<Object?, Object?>, value.key.toString()));
+    final path = database.ref("users/${auth.currentUser!.uid}");
+    path.get().then((value) => db.setCurrentUser(UserModel.fromUser(
+        value.value as Map<Object?, Object?>, value.key.toString())));
   }
 }

@@ -6,6 +6,7 @@ import 'package:chatting_app/controllers/app_data_controller.dart';
 import 'package:chatting_app/models/app_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../controllers/firebase_controller.dart';
 import '../../../../helpers/base_getters.dart';
@@ -78,7 +79,7 @@ class ImageMessageTile extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(controller.getTimeFormat(chat.sendAt),
+                Text(DateFormat("hh:mm a").format(chat.sendAt).toString(),
                     style: GetTextTheme.sf10_regular),
                 AppServices.addWidth(5),
                 _controller.isSender(chat)

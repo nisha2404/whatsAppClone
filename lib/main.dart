@@ -1,6 +1,7 @@
 import 'package:chatting_app/Screens/splash.dart';
 import 'package:chatting_app/app_config.dart';
 import 'package:chatting_app/controllers/app_data_controller.dart';
+import 'package:chatting_app/services/chatroom_handler.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,7 +24,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
         providers: [
-          ChangeNotifierProvider(create: (context) => AppDataController())
+          ChangeNotifierProvider(create: (context) => AppDataController()),
+          ChangeNotifierProvider(create: (context) => ChatroomHandler()),
         ],
         child: ScreenUtilInit(
             builder: (context, child) => MaterialApp(

@@ -57,9 +57,9 @@ class UpdateUsernameDialog extends StatelessWidget {
     if (_username.text.isNotEmpty) {
       final path = database.ref("users/${auth.currentUser!.uid}");
       await path.update({"userName": _username.text});
-      path.get().then((value) {
+      await path.get().then((value) {
         final db = Provider.of<AppDataController>(context, listen: false);
-        db.addUser(UserModel.fromUser(
+        db.setCurrentUser(UserModel.fromUser(
             value.value as Map<Object?, Object?>, value.key.toString()));
       });
       AppServices.popView(context);

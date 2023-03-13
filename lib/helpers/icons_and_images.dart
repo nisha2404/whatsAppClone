@@ -29,3 +29,7 @@ class AppImages {
   static const String otpVector = "assets/images/otpVector.png";
   static const String avatarPlaceholder = "assets/images/avatarPlaceholder.png";
 }
+
+class AppGiff {
+  static const String avatarPlaceholder = "assets/giff/loadingGif.gif";
+}

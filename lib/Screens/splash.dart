@@ -1,6 +1,7 @@
 import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/app_data_controller.dart';
@@ -22,6 +23,8 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     initializeAnimation();
   }
+
+
 
   initializeAnimation() {
     _animationController = AnimationController(

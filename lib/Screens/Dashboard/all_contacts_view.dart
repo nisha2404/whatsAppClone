@@ -68,7 +68,7 @@ class _AllContactsViewState extends State<AllContactsView> {
                 itemBuilder: (context, i) {
                   return ListTile(
                     onTap: () => AppServices.pushAndReplace(
-                        ChatRoom(user: users[i]), context),
+                        ChatroomView(targetUser: users[i].uid), context),
                     title: Text(users[i].phoneNumber,
                         style: GetTextTheme.sf18_bold),
                     leading: Container(

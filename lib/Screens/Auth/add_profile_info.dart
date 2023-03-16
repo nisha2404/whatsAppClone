@@ -280,7 +280,7 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
       "userName": _nameController.text.trim(),
       "profileImg": imageUrl == "" ? "" : imageUrl,
       "about": _aboutController.text.isEmpty
-          ? "Hey! there I am using ${AppConfig.appName}"
+          ? "Hey there! I am using ${AppConfig.appName}"
           : _aboutController.text.trim(),
       "phoneNumber": auth.currentUser!.phoneNumber
     };

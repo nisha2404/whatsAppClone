@@ -1,3 +1,5 @@
+// ignore_for_file: must_be_immutable
+
 import 'package:chatting_app/controllers/app_data_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,12 +12,7 @@ import '../../../../models/app_models.dart';
 class TextMessageTile extends StatelessWidget {
   ChatModel chat;
   AppDataController controller;
-  bool isuserActive;
-  TextMessageTile(
-      {super.key,
-      required this.chat,
-      required this.controller,
-      this.isuserActive = false});
+  TextMessageTile({super.key, required this.chat, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +53,7 @@ class TextMessageTile extends StatelessWidget {
                         style: GetTextTheme.sf10_regular),
                     AppServices.addWidth(5),
                     FirebaseController().isSender(chat)
-                        ? isuserActive == false
+                        ? chat.isDelivered == false
                             ? Icon(Icons.done,
                                 size: 18.sp, color: AppColors.grey150)
                             : Icon(Icons.done_all,

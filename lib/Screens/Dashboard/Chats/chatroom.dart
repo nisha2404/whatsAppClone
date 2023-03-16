@@ -166,9 +166,7 @@ class _ChatRoomState extends State<ChatRoom> {
                       db: db,
                       chats: chats,
                       onLongPress: () =>
-                          setState(() => showDeleteButton = true),
-                      user: widget.user,
-                    ),
+                          setState(() => showDeleteButton = true)),
               MsgTextField(
                   onLinkBtnPressed: () => onImagePick(),
                   onEmojiPressed: () => {

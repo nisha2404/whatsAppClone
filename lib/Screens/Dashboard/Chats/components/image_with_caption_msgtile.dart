@@ -16,14 +16,12 @@ class ImageWithCaptionMsgTile extends StatelessWidget {
   AppDataController controller;
   bool isShowDelete;
   Function? onDelete;
-  bool isuserActive;
   ImageWithCaptionMsgTile(
       {super.key,
       required this.chat,
       required this.controller,
       this.isShowDelete = false,
-      this.onDelete,
-      this.isuserActive = false});
+      this.onDelete});
 
   final FirebaseController _controller = FirebaseController();
 
@@ -106,7 +104,7 @@ class ImageWithCaptionMsgTile extends StatelessWidget {
                                 style: GetTextTheme.sf10_regular),
                             AppServices.addWidth(5.w),
                             FirebaseController().isSender(chat)
-                                ? isuserActive == false
+                                ? chat.isDelivered == false
                                     ? Icon(Icons.done,
                                         size: 18.sp, color: AppColors.grey150)
                                     : Icon(Icons.done_all,

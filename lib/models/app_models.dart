@@ -20,15 +20,16 @@ class UserModel {
 class ChatModel {
   String msgId, sender, msg, msgType;
   DateTime sendAt;
-  bool isSeen;
+  bool isSeen, isDelivered;
   ChatModel(this.msgId, this.sender, this.msg, this.sendAt, this.isSeen,
-      this.msgType);
+      this.msgType, this.isDelivered);
   ChatModel.fromChat(Map<Object?, Object?> json, this.msgId)
       : sender = json['sender'].toString(),
         msg = json['message'] == "" ? "" : json['message'].toString(),
         sendAt = DateTime.parse(json['sendAt'].toString()),
         msgType = json['type'].toString(),
-        isSeen = json['seen'].toString() == "false" ? false : true;
+        isSeen = json['seen'].toString() == "false" ? false : true,
+        isDelivered = json['isDelivered'].toString() == "true" ? true : false;
 }
 
 class ChatRoomModel {

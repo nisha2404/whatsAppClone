@@ -1,4 +1,4 @@
-import 'package:chatting_app/Screens/Auth/login.dart';
+import 'package:chatting_app/Screens/Dashboard/Chats/GroupChats/create_group.dart';
 import 'package:chatting_app/Screens/Dashboard/Chats/chat_view_tab.dart';
 import 'package:chatting_app/Screens/Dashboard/Settings/settings.dart';
 import 'package:chatting_app/Screens/Dashboard/all_contacts_view.dart';
@@ -65,7 +65,7 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
 
   getRoute(String choice) {
     if (choice == "group") {
-      AppServices.pushTo(const LoginScreen(), context);
+      AppServices.pushTo(const CreateGroup(), context);
     } else if (choice == "settings") {
       AppServices.pushTo(const SettingsView(), context);
     } else {

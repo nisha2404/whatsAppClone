@@ -17,14 +17,12 @@ class ChatRoomChatsView extends StatelessWidget {
   AppDataController db;
   List<ChatModel> chats;
   Function onLongPress;
-  UserModel user;
   ChatRoomChatsView(
       {super.key,
       required this.controller,
       required this.db,
       required this.chats,
-      required this.onLongPress,
-      required this.user});
+      required this.onLongPress});
 
   @override
   Widget build(BuildContext context) {
@@ -58,20 +56,12 @@ class ChatRoomChatsView extends StatelessWidget {
                 chats[i].msgType == "image"
                     ? GestureDetector(
                         onLongPress: () => {onLongPress()},
-                        child: ImageMessageTile(
-                            chat: chats[i],
-                            controller: db,
-                            isuserActive: user.isActive),
+                        child: ImageMessageTile(chat: chats[i], controller: db),
                       )
                     : chats[i].msgType == "imageWithText"
                         ? ImageWithCaptionMsgTile(
-                            chat: chats[i],
-                            controller: db,
-                            isuserActive: user.isActive)
-                        : TextMessageTile(
-                            chat: chats[i],
-                            controller: db,
-                            isuserActive: user.isActive)
+                            chat: chats[i], controller: db)
+                        : TextMessageTile(chat: chats[i], controller: db)
               ],
             );
           },

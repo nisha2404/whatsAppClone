@@ -1,15 +1,20 @@
+import 'package:chatting_app/Screens/Auth/login.dart';
 import 'package:chatting_app/Screens/Dashboard/Chats/chat_view_tab.dart';
 import 'package:chatting_app/Screens/Dashboard/Settings/settings.dart';
 import 'package:chatting_app/Screens/Dashboard/all_contacts_view.dart';
 import 'package:chatting_app/Screens/Dashboard/calls/call_view_tab.dart';
 import 'package:chatting_app/Screens/Dashboard/community/community_view_tab.dart';
 import 'package:chatting_app/Screens/Dashboard/status/status_view_tab.dart';
+import 'package:chatting_app/controllers/app_data_controller.dart';
+import 'package:chatting_app/controllers/chat_handler.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/base_getters.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../helpers/icons_and_images.dart';
 import '../../app_config.dart';
@@ -25,6 +30,7 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
   final _firebase = FirebaseDatabase.instance;
   final dbController = FirebaseController();
+
   List<Widget> tabs = [
     Tab(
       icon: Image.asset(AppIcons.communityIcon,
@@ -37,35 +43,66 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
 
   List<PopupMenuItem> popupOptions() {
     return [
-      PopupMenuItem(onTap: () => {}, child: const Text("New Group")),
-      PopupMenuItem(onTap: () => {}, child: const Text("New Broadcast")),
-      PopupMenuItem(onTap: () => {}, child: const Text("Linked Devices")),
-      PopupMenuItem(onTap: () => {}, child: const Text("Starred messages")),
-      PopupMenuItem(onTap: () => {}, child: const Text("Payments")),
       PopupMenuItem(
-          onTap: () => {AppServices.pushTo(const SettingsView(), context)},
-          child: const Text("Settings")),
-      PopupMenuItem(
-          onTap: () => FirebaseController().logOut(context),
-          child: const Text("Logout")),
+        onTap: () => {},
+        value: "group",
+        child: const Text("New Group"),
+      ),
+      // PopupMenuItem(onTap: () => {}, child: const Text("New Broadcast")),
+      // PopupMenuItem(onTap: () => {}, child: const Text("Linked Devices")),
+      // PopupMenuItem(onTap: () => {}, child: const Text("Starred messages")),
+      // PopupMenuItem(onTap: () => {}, child: const Text("Payments")),
+      const PopupMenuItem(
+          // onTap: () => {AppServices.pushTo(const SettingsView(), context)},
+          value: "settings",
+          child: Text("Settings")),
+      const PopupMenuItem(
+          // onTap: () => FirebaseController().logOut(context),
+          value: "logout",
+          child: Text("Logout")),
     ];
+  }
+
+  getRoute(String choice) {
+    if (choice == "group") {
+      AppServices.pushTo(const LoginScreen(), context);
+    } else if (choice == "settings") {
+      AppServices.pushTo(const SettingsView(), context);
+    } else {
+      FirebaseController().logOut(context);
+    }
   }
 
   @override
   void initState() {
     super.initState();
+    getSession();
+  }
+
+  getSession() async {
+    final db = Provider.of<AppDataController>(context, listen: false);
+    if (!await rebuild()) return;
+    db.setLoader(true);
     final path = _firebase.ref("chatRoom");
-    final path2 = _firebase.ref("users/${auth.currentUser!.uid}");
     path.onChildAdded.listen((event) {
-      dbController.setNewChatRoom(event, context);
-    });
-    path.onChildChanged
-        .listen((event) => dbController.setLastMsg(event, context));
-    path2.onChildChanged.listen((event) {
-      dbController.onUserUpdated(event, context);
+      ChatHandler().onChatRoomAdded(context, event);
     });
     WidgetsBinding.instance.addObserver(this);
     setStatus(true);
+  }
+
+  Future<bool> rebuild() async {
+    if (!mounted) return false;
+
+    // if there's a current frame,
+    if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
+      // wait for the end of that frame.
+      await SchedulerBinding.instance.endOfFrame;
+      if (!mounted) return false;
+    }
+
+    setState(() {});
+    return true;
   }
 
   @override
@@ -97,11 +134,13 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        backgroundColor: AppColors.whiteColor,
         floatingActionButton: FloatingActionButton(
             onPressed: () =>
                 AppServices.pushTo(const AllContactsView(), context),
             backgroundColor: AppColors.primaryColor,
-            child: const Icon(Icons.chat)),
+            child: Image.asset(AppGiffs.chatBubbleGiff,
+                height: 35.sp, color: AppColors.whiteColor)),
         body: DefaultTabController(
           initialIndex: 1,
           length: tabs.length,
@@ -122,8 +161,7 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
                           statusBarColor: AppColors.primaryColor),
                       actions: [
                         IconButton(
-                            onPressed: () => AppServices.pushTo(
-                                const SettingsView(), context),
+                            onPressed: () => {},
                             splashRadius: 20.r,
                             icon: const Icon(Icons.camera_alt_outlined)),
                         IconButton(
@@ -131,6 +169,7 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
                             splashRadius: 20.r,
                             icon: const Icon(Icons.search)),
                         PopupMenuButton(
+                            onSelected: (value) => getRoute(value),
                             position: PopupMenuPosition.over,
                             itemBuilder: (context) => popupOptions())
                       ],

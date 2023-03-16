@@ -13,12 +13,20 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+// verification id for Otp verification.
 String receivedVerificationId = "";
+
+// instance of firebase authentication.
 final auth = FirebaseAuth.instance;
+
+// instance of firebase Database.
 final database = FirebaseDatabase.instance;
+
+// instance of firebase Storage.
 final storage = FirebaseStorage.instance;
 
 class FirebaseController {
+  // authentication verify phone number
   verifyPhone(BuildContext context, String phoneNumber) async {
     final db = Provider.of<AppDataController>(context, listen: false);
     try {
@@ -44,6 +52,7 @@ class FirebaseController {
     }
   }
 
+// authentication verify otp code
   verifyCode(String code, String phoneNumber, BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
     db.setLoader(true);
@@ -64,11 +73,13 @@ class FirebaseController {
     db.setLoader(false);
   }
 
+// authentication add user profile to database
   addUserProfile(Map<String, dynamic> data, BuildContext context) async {
     final path = database.ref("users/${auth.currentUser!.uid}");
     await path.set(data);
   }
 
+// logout current user and navigate to login screen.
   logOut(BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
     await auth.signOut().then((value) => {
@@ -77,54 +88,37 @@ class FirebaseController {
         });
   }
 
-  msgIsSeen(List<ChatModel> chats, String id) async {
-    final unseenChats = chats
-        .where((element) =>
-            element.isSeen == false &&
-            element.receiver == auth.currentUser!.uid)
-        .toList();
-    for (var chat in unseenChats) {
-      await database
-          .ref("chatRoom/${createChatRoomId(id)}/chats/${chat.msgId}")
-          .update({"seen": true});
+// function to check the message is seen by the target user or not.
+  msgIsSeen(BuildContext context, String roomId) async {
+    final path = database.ref("chatRoom/$roomId/chats");
+    final snapshot = await path.get();
+    if (snapshot.exists) {
+      final lastMsg = snapshot.children.last.value as Map<Object?, Object?>;
+      bool isSentByMe = lastMsg['sender'].toString() == auth.currentUser!.uid;
+      if (isSentByMe) {
+        null;
+      } else {
+        final db = Provider.of<AppDataController>(context, listen: false);
+        var data = db.getIndividualChats
+            .where((element) => element.isSeen == false)
+            .toList()
+            .map((e) => e.msgId)
+            .toList();
+        for (var msgid in data) {
+          final msgPath = database.ref("chatRoom/$roomId/chats/$msgid");
+          await msgPath.update({"seen": true});
+        }
+      }
     }
   }
 
-  // updateUserPreferences() async {
-  //   Map<String, dynamic> online = {
-  //     'isActive': true,
-  //     'lastSeen': DateTime.now().millisecondsSinceEpoch,
-  //   };
-  //   Map<String, dynamic> offline = {
-  //     'isActive': false,
-  //     'lastSeen': DateTime.now().millisecondsSinceEpoch,
-  //   };
-  //   final connectedRef = database.ref('.info/connected');
-
-  //   connectedRef.onValue.listen((event) async {
-  //     final isConnected = event.snapshot.value as bool? ?? false;
-  //     if (isConnected) {
-  //       await database
-  //           .ref()
-  //           .child("users")
-  //           .child(auth.currentUser!.uid)
-  //           .update(online);
-  //     } else {
-  //       await database
-  //           .ref()
-  //           .child("users")
-  //           .child(auth.currentUser!.uid)
-  //           .onDisconnect()
-  //           .update(offline);
-  //     }
-  //   });
-  // }
-
+// function to check the current user or not if current user then navigate to dashboard or navigate to login
   isCurrentUser(BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
     auth.currentUser != null
         ? {
             db.setLoader(true),
+            getCurrentUser(context),
             await getAllUsers(context),
             db.setLoader(false),
             AppServices.fadeTransitionNavigation(context, const Dashboard())
@@ -132,19 +126,20 @@ class FirebaseController {
         : AppServices.fadeTransitionNavigation(context, const LoginScreen());
   }
 
+// firebase function to get all the users registered in the app.
   Future<void> getAllUsers(BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
     try {
-      // db.setLoader(true);
+      db.setLoader(true);
       await database.ref("users").get().then((value) {
         if (value.exists) {
           db.setUsers(value.children
               .map((e) => UserModel.fromUser(
                   e.value as Map<Object?, Object?>, e.key.toString()))
               .toList());
-          // db.setLoader(false);
+          db.setLoader(false);
         } else {
-          // db.setLoader(false);
+          db.setLoader(false);
         }
       });
     } catch (e) {
@@ -153,155 +148,66 @@ class FirebaseController {
     }
   }
 
-  String createChatRoomId(String id) {
-    if (auth.currentUser!.uid.hashCode >= id.hashCode) {
-      return "${auth.currentUser!.uid}_vs_$id";
-    } else {
-      return "${id}_vs_${auth.currentUser!.uid}";
-    }
-  }
-
-  createChatRoom(Map<String, dynamic> data, String receiverId) async {
-    try {
-      final path2 =
-          database.ref("chatRoom/${createChatRoomId(receiverId)}/chats").push();
-      final path = database.ref("chatRoom/${createChatRoomId(receiverId)}");
-      final chatroom = await path.get();
-      if (chatroom.exists) {
-        await path2.set(data);
+// function to check if the chatRoom is available or not if chatroom is available then return the chatRoom.
+  List<ChatRoomModel> isChatRoomAvailable(
+      BuildContext context, String targetid) {
+    final db = Provider.of<AppDataController>(context, listen: false);
+    final chatRooms = db.getAllChatRooms;
+    final List<ChatRoomModel> availableRooms = [];
+    for (var room in chatRooms) {
+      if (room.members.any((e) => e == targetid) &&
+          room.members.any((element) => element == auth.currentUser!.uid)) {
+        availableRooms.add(room);
       } else {
-        await path.set({
-          "isGroup": false,
-          "chats": [data]
-        });
+        null;
       }
-    } catch (e) {
-      print(e);
+    }
+    return availableRooms;
+  }
+
+// function to create a chatRoom or if existing then send message to database.
+  Future<bool> createChatRoom(
+      Map<String, dynamic> data, String targetid, BuildContext context) async {
+    final db = Provider.of<AppDataController>(context, listen: false);
+    db.setTempMsg(data);
+    final List<ChatRoomModel> rooms = isChatRoomAvailable(context, targetid);
+    if (rooms.isEmpty) {
+      final path = database.ref("chatRoom").push();
+      await path.set({
+        "members": [targetid, auth.currentUser!.uid],
+        "isGroup": false
+      });
+      return true;
+    } else {
+      final path2 =
+          database.ref("chatRoom/${rooms.first.chatroomId}/chats").push();
+      await path2.set(data);
+
+      return true;
     }
   }
 
+// function to reset all chats in appdataController.
   resetMessages(BuildContext context) {
     final db = Provider.of<AppDataController>(context, listen: false);
     db.resetChats();
   }
 
+// function to check if the current user is sender or not.
   bool isSender(ChatModel chat) {
     return chat.sender == auth.currentUser!.uid;
   }
 
+// function to get all the chats of a chatRoom.
   getChats(String chatRoomKey) async {
     final path = database.ref("chatRoom/$chatRoomKey/chats");
     await path.get();
   }
 
-  setLastMsg(DatabaseEvent event, BuildContext context) async {
+  getCurrentUser(BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
-    final chatroomKey = event.snapshot.key.toString();
-    final userPath = await database.ref("users").get();
-    final user = userPath.children.firstWhere((element) =>
-        element.key ==
-        chatroomKey
-            .toString()
-            .split("_vs_")
-            .firstWhere((element) => element != auth.currentUser!.uid)
-            .toString());
-    final msgSnapshot =
-        await database.ref("chatRoom/$chatroomKey/chats").orderByValue().get();
-    if (msgSnapshot.exists) {
-      final lastMsg = msgSnapshot.children.last;
-      db.setLastMsg(ChatRoomModel.fromChatrooms(
-          event.snapshot.value as Map<Object?, Object?>,
-          chatroomKey,
-          chatroomKey
-              .split("_vs_")
-              .firstWhere((element) => element != auth.currentUser!.uid)
-              .toString(),
-          ChatModel.fromChat(
-              lastMsg.value as Map<Object?, Object?>, lastMsg.key.toString()),
-          UserModel.fromUser(
-              user.value as Map<Object?, Object?>, user.key.toString())));
-    }
-  }
-
-  setNewChatRoom(DatabaseEvent event, BuildContext context) async {
-    final db = Provider.of<AppDataController>(context, listen: false);
-    final chatRoomKey = event.snapshot.key;
-    final userPath = await database.ref("users").get();
-    final user = userPath.children.firstWhere((element) =>
-        element.key ==
-        chatRoomKey
-            .toString()
-            .split("_vs_")
-            .firstWhere((element) => element != auth.currentUser!.uid)
-            .toString());
-    final message =
-        await database.ref("chatRoom/$chatRoomKey/chats").orderByValue().get();
-    if (message.exists) {
-      final lastMsg = message.children.last;
-      db.setLastMsg(ChatRoomModel.fromChatrooms(
-          event.snapshot.value as Map<Object?, Object?>,
-          event.snapshot.key.toString(),
-          event.snapshot.key
-              .toString()
-              .split("_vs_")
-              .firstWhere((element) => element != auth.currentUser!.uid),
-          ChatModel.fromChat(
-              lastMsg.value as Map<Object?, Object?>, lastMsg.key.toString()),
-          UserModel.fromUser(
-              user.value as Map<Object?, Object?>, user.key.toString())));
-      getAllUsers(context);
-    }
-  }
-
-  getAllChatRooms(BuildContext context) async {
-    final db = Provider.of<AppDataController>(context, listen: false);
-    final chatroomPath = database.ref("chatRoom");
-    var snapshot = await chatroomPath.get();
-    if (snapshot.exists) {
-      db.setLoader(true);
-      final List<ChatRoomModel> rooms = [];
-      final chatroomList = snapshot.children
-          .where((e) => e.key.toString().contains(auth.currentUser!.uid))
-          .toList();
-      for (var room in chatroomList) {
-        final userPath = await database.ref("users").get();
-        final user = userPath.children.firstWhere((element) =>
-            element.key ==
-            room.key
-                .toString()
-                .split("_vs_")
-                .firstWhere((element) => element != auth.currentUser!.uid)
-                .toString());
-        final msgPath = database.ref("chatRoom/${room.key}/chats");
-        final msgSnapshot = await msgPath.get();
-        if (msgSnapshot.exists) {
-          final lastmsg = msgSnapshot.children.last;
-          rooms.add(ChatRoomModel.fromChatrooms(
-              room.value as Map<Object?, Object?>,
-              room.key.toString(),
-              room.key
-                  .toString()
-                  .split("_vs_")
-                  .firstWhere((element) => element != auth.currentUser!.uid)
-                  .toString(),
-              ChatModel.fromChat(lastmsg.value as Map<Object?, Object?>,
-                  lastmsg.key.toString()),
-              UserModel.fromUser(
-                  user.value as Map<Object?, Object?>, user.key.toString())));
-        }
-      }
-      db.addAllchatRooms(rooms);
-      db.setLoader(false);
-    } else {
-      db.setLoader(false);
-      null;
-    }
-  }
-
-  onUserUpdated(DatabaseEvent event, BuildContext context) async {
-    final db = Provider.of<AppDataController>(context, listen: false);
-    final value = event.snapshot;
-    db.addUser(UserModel.fromUser(
-        value.value as Map<Object?, Object?>, value.key.toString()));
+    final path = database.ref("users/${auth.currentUser!.uid}");
+    path.get().then((value) => db.setCurrentUser(UserModel.fromUser(
+        value.value as Map<Object?, Object?>, value.key.toString())));
   }
 }

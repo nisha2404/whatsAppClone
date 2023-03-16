@@ -16,12 +16,14 @@ class ImageWithCaptionMsgTile extends StatelessWidget {
   AppDataController controller;
   bool isShowDelete;
   Function? onDelete;
+  bool isuserActive;
   ImageWithCaptionMsgTile(
       {super.key,
       required this.chat,
       required this.controller,
       this.isShowDelete = false,
-      this.onDelete});
+      this.onDelete,
+      this.isuserActive = false});
 
   final FirebaseController _controller = FirebaseController();
 
@@ -71,7 +73,7 @@ class ImageWithCaptionMsgTile extends StatelessWidget {
                   : MainAxisAlignment.start,
               children: [
                 Card(
-                  margin: const EdgeInsets.symmetric(vertical: 2),
+                  margin: EdgeInsets.symmetric(vertical: 2.sp),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.vertical(
                           // top: Radius.circular(15.r),
@@ -80,10 +82,14 @@ class ImageWithCaptionMsgTile extends StatelessWidget {
                       ? AppColors.orange40
                       : AppColors.whiteColor,
                   child: Container(
-                    constraints: const BoxConstraints(maxWidth: 213),
-                    padding: const EdgeInsets.all(10.0),
-                    child: Wrap(
-                      alignment: WrapAlignment.end,
+                    alignment: Alignment.centerLeft,
+                    constraints: BoxConstraints(maxWidth: 220.sp),
+                    width: 220.sp,
+                    padding: EdgeInsets.all(10.sp),
+                    child: Column(
+                      crossAxisAlignment: FirebaseController().isSender(chat)
+                          ? CrossAxisAlignment.start
+                          : CrossAxisAlignment.end,
                       children: [
                         Text(chat.msg.split("__").last,
                             maxLines: 3,
@@ -91,18 +97,23 @@ class ImageWithCaptionMsgTile extends StatelessWidget {
                             style: GetTextTheme.sf16_regular),
                         AppServices.addWidth(10.w),
                         Row(
-                          mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisAlignment: FirebaseController().isSender(chat)
+                              ? MainAxisAlignment.end
+                              : MainAxisAlignment.start,
                           children: [
                             Text(controller.getTimeFormat(chat.sendAt),
                                 style: GetTextTheme.sf10_regular),
-                            AppServices.addWidth(5),
+                            AppServices.addWidth(5.w),
                             FirebaseController().isSender(chat)
-                                ? Icon(Icons.done_all,
-                                    size: 18.sp,
-                                    color: chat.isSeen
-                                        ? AppColors.blueColor
-                                        : AppColors.grey150)
+                                ? isuserActive == false
+                                    ? Icon(Icons.done,
+                                        size: 18.sp, color: AppColors.grey150)
+                                    : Icon(Icons.done_all,
+                                        size: 18.sp,
+                                        color: chat.isSeen
+                                            ? AppColors.primaryColor
+                                            : AppColors.grey150)
                                 : const SizedBox()
                           ],
                         ),

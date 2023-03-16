@@ -29,3 +29,9 @@ class AppImages {
   static const String otpVector = "assets/images/otpVector.png";
   static const String avatarPlaceholder = "assets/images/avatarPlaceholder.png";
 }
+
+class AppGiffs {
+  static const String chatGiff = "assets/giff/chatGiff.gif";
+  static const String chatGiff2 = "assets/giff/chatGiff2.gif";
+  static const String chatBubbleGiff = "assets/giff/chat_bubble.gif";
+}

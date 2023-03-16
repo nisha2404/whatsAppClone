@@ -2,7 +2,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatting_app/Screens/Dashboard/Settings/views/profile/profile_view.dart';
 import 'package:chatting_app/components/shimmers/profile_img_shimmer.dart';
 import 'package:chatting_app/controllers/app_data_controller.dart';
-import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/base_getters.dart';
 import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:chatting_app/helpers/style_sheet.dart';
@@ -34,9 +33,8 @@ class _SettingsViewState extends State<SettingsView> {
           child: SingleChildScrollView(
         child: Column(children: [
           Consumer<AppDataController>(builder: (context, data, child) {
-            final user = data.getUsers
-                .firstWhere((element) => element.uid == auth.currentUser!.uid);
-            return GestureDetector(
+            final user = data.getcurrentUser;
+            return InkWell(
               onTap: () => AppServices.pushTo(const ProfileView(), context),
               child: Container(
                 margin: EdgeInsets.all(15.sp),

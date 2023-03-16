@@ -2,11 +2,14 @@
 
 import 'package:chatting_app/components/expanded_button.dart';
 import 'package:chatting_app/components/underline_input_border_textfield.dart';
+import 'package:chatting_app/controllers/app_data_controller.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/base_getters.dart';
 import 'package:chatting_app/helpers/style_sheet.dart';
+import 'package:chatting_app/models/app_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 class UpdateuserAboutDialog extends StatelessWidget {
   UpdateuserAboutDialog({super.key});
@@ -51,6 +54,11 @@ class UpdateuserAboutDialog extends StatelessWidget {
     if (_about.text.isNotEmpty) {
       final path = database.ref("users/${auth.currentUser!.uid}");
       await path.update({"about": _about.text});
+      await path.get().then((value) {
+        final db = Provider.of<AppDataController>(context, listen: false);
+        db.setCurrentUser(UserModel.fromUser(
+            value.value as Map<Object?, Object?>, value.key.toString()));
+      });
       AppServices.popView(context);
     }
   }

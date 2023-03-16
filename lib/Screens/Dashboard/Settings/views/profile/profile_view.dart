@@ -12,6 +12,7 @@ import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/base_getters.dart';
 import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:chatting_app/helpers/style_sheet.dart';
+import 'package:chatting_app/models/app_models.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -41,7 +42,7 @@ class _ProfileViewState extends State<ProfileView> {
   @override
   Widget build(BuildContext context) {
     final db = Provider.of<AppDataController>(context);
-    final user = db.getUsers.firstWhere((e) => e.uid == auth.currentUser!.uid);
+    final user = db.getcurrentUser;
     return Scaffold(
       backgroundColor: AppColors.whiteColor,
       resizeToAvoidBottomInset: false,
@@ -211,6 +212,7 @@ class _ProfileViewState extends State<ProfileView> {
   }
 
   uploadImage(String imgPath) async {
+    final db = Provider.of<AppDataController>(context, listen: false);
     setState(() => isUploadImage = true);
     final path = database.ref("users/${auth.currentUser!.uid}");
     Reference deleteImgRef = storage.refFromURL(imgPath);
@@ -223,6 +225,8 @@ class _ProfileViewState extends State<ProfileView> {
       await referenceRoot.putFile(File(croppedProfileImg!.path));
       imgUrl = await referenceRoot.getDownloadURL();
       path.update({"profileImg": imgUrl});
+      await path.get().then((v) => db.setCurrentUser(UserModel.fromUser(
+          v.value as Map<Object?, Object?>, v.key.toString())));
       setState(() => isUploadImage = false);
     } catch (e) {
       setState(() => isUploadImage = false);

@@ -5,9 +5,6 @@ import 'package:intl/intl.dart';
 dynamic preferences;
 
 class AppDataController extends ChangeNotifier {
-  bool _loading = false;
-  // String _currentUid = "";
-
   String getTimeFormat(DateTime time) {
     if (time.day == DateTime.now().day) {
       return DateFormat('hh:mm a').format(time);
@@ -18,6 +15,8 @@ class AppDataController extends ChangeNotifier {
     }
   }
 
+// getter and setter for loading.
+  bool _loading = false;
   bool get showLoader => _loading;
   setLoader(bool status) {
     _loading = status;
@@ -35,9 +34,9 @@ class AppDataController extends ChangeNotifier {
 
   UserModel? _currentuser;
 
-  UserModel get currentUser => _currentuser!;
+  UserModel get getcurrentUser => _currentuser!;
 
-  addUser(UserModel user) {
+  setCurrentUser(UserModel user) {
     _currentuser = user;
     notifyListeners();
   }
@@ -56,6 +55,21 @@ class AppDataController extends ChangeNotifier {
     notifyListeners();
   }
 
+  updateMessageId(String msgId) {
+    final chats = _chats.where((element) => element.msgId == "").toList();
+    for (var msg in chats) {
+      msg.msgId = msgId;
+    }
+    notifyListeners();
+  }
+
+  updateChatIsSeen() {
+    for (var chat in _chats) {
+      chat.isSeen = true;
+    }
+    notifyListeners();
+  }
+
   resetChats() {
     _chats = [];
     notifyListeners();
@@ -69,21 +83,29 @@ class AppDataController extends ChangeNotifier {
     notifyListeners();
   }
 
+  addChatRoom(ChatRoomModel chatRoom) {
+    _chatRooms.add(chatRoom);
+    notifyListeners();
+  }
+
   resetChatRooms() {
     _chatRooms = [];
     notifyListeners();
   }
 
-  setLastMsg(ChatRoomModel room) {
-    bool isroomAvailable =
-        _chatRooms.any((element) => element.chatroomId == room.chatroomId);
-    if (isroomAvailable) {
-      int index = _chatRooms
-          .indexWhere((element) => element.chatroomId == room.chatroomId);
-      _chatRooms[index] = room;
-    } else {
-      _chatRooms.add(room);
-    }
+  setLastMsg(String chatRoomId, ChatModel chat) {
+    int index =
+        _chatRooms.indexWhere((element) => element.chatroomId == chatRoomId);
+    _chatRooms[index].lastMsg = chat;
+
+    notifyListeners();
+  }
+
+  Map<String, dynamic> _tempMsg = {};
+  Map<String, dynamic> get getMsg => _tempMsg;
+
+  setTempMsg(Map<String, dynamic> msg) {
+    _tempMsg = msg;
     notifyListeners();
   }
 }

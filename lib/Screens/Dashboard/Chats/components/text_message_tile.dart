@@ -10,7 +10,12 @@ import '../../../../models/app_models.dart';
 class TextMessageTile extends StatelessWidget {
   ChatModel chat;
   AppDataController controller;
-  TextMessageTile({super.key, required this.chat, required this.controller});
+  bool isuserActive;
+  TextMessageTile(
+      {super.key,
+      required this.chat,
+      required this.controller,
+      this.isuserActive = false});
 
   @override
   Widget build(BuildContext context) {
@@ -51,11 +56,14 @@ class TextMessageTile extends StatelessWidget {
                         style: GetTextTheme.sf10_regular),
                     AppServices.addWidth(5),
                     FirebaseController().isSender(chat)
-                        ? Icon(Icons.done_all,
-                            size: 18.sp,
-                            color: chat.isSeen
-                                ? AppColors.blueColor
-                                : AppColors.grey150)
+                        ? isuserActive == false
+                            ? Icon(Icons.done,
+                                size: 18.sp, color: AppColors.grey150)
+                            : Icon(Icons.done_all,
+                                size: 18.sp,
+                                color: chat.isSeen
+                                    ? AppColors.primaryColor
+                                    : AppColors.grey150)
                         : const SizedBox()
                   ],
                 ),

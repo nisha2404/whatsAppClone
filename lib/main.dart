@@ -34,12 +34,6 @@ class MyApp extends StatelessWidget {
                       systemOverlayStyle: SystemUiOverlayStyle(
                           statusBarIconBrightness: Brightness.dark,
                           statusBarColor: Colors.transparent)),
-                  // textButtonTheme: TextButtonThemeData(
-                  //     style: ButtonStyle(
-                  //         backgroundColor:
-                  //             MaterialStateProperty.all(AppColors.primaryColor),
-                  //         foregroundColor:
-                  //             MaterialStateProperty.all(AppColors.whiteColor)))
                 ),
                 home: const SplashScreen()),
             splitScreenMode: false,

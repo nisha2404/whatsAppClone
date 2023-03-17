@@ -5,9 +5,23 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+dynamic currentChatroomId;
+
 class ChatHandler {
+  onGroupMsgSend(
+      BuildContext context, DatabaseEvent event, String chatRoomId) async {
+    final db = Provider.of<AppDataController>(context, listen: false);
+    final msg = ChatModel.fromChat(
+        event.snapshot.value as Map<Object?, Object?>,
+        event.snapshot.key.toString());
+    // FirebaseController().msgIsSeen(context, chatRoomId);
+    db.addChat(msg);
+    db.setLastMsg(chatRoomId, msg);
+  }
+
   // event handler or event listener for a new message add on the database.
-  onMsgSend(BuildContext context, DatabaseEvent event, String chatRoomId) {
+  onMsgSend(BuildContext context, DatabaseEvent event, String chatRoomId,
+      UserModel targetUser) async {
     final db = Provider.of<AppDataController>(context, listen: false);
     final msg = ChatModel.fromChat(
         event.snapshot.value as Map<Object?, Object?>,
@@ -15,6 +29,12 @@ class ChatHandler {
     FirebaseController().msgIsSeen(context, chatRoomId);
     db.addChat(msg);
     db.setLastMsg(chatRoomId, msg);
+    if (targetUser.isActive) {
+      await database
+          .ref("chatRoom/$chatRoomId/chats/${event.snapshot.key}")
+          .update({"isDelivered": true});
+      db.updateChatIsDelivered();
+    }
   }
 
 // event listener to get the updates of change in any message on database.
@@ -53,17 +73,35 @@ class ChatHandler {
       final user = await userpath.get();
       final msgs = await chatPath.get();
 
+      if ((user.value as Map<Object?, Object?>)['isActive'] == true) {
+        var messages = msgs.children
+            .where((element) =>
+                (element.value as Map<Object?, Object?>)['isDelivered'] ==
+                false)
+            .toList();
+        for (var msg in messages) {
+          final path =
+              database.ref("chatRoom/${event.snapshot.key}/chats/${msg.key}");
+          await path.update({"isDelivered": true});
+        }
+      }
+
       db.addChatRoom(ChatRoomModel.fromChatrooms(
           value,
           event.snapshot.key.toString(),
-          ChatModel.fromChat(msgs.children.last.value as Map<Object?, Object?>,
-              msgs.children.last.key.toString()),
+          msgs.children.isEmpty
+              ? null
+              : ChatModel.fromChat(
+                  msgs.children.last.value as Map<Object?, Object?>,
+                  msgs.children.last.key.toString()),
           UserModel.fromUser(
               user.value as Map<Object?, Object?>, user.key.toString())));
 
-      db.addChat(ChatModel.fromChat(
-          msgs.children.last.value as Map<Object?, Object?>,
-          msgs.children.last.key.toString()));
+      msgs.children.isEmpty
+          ? null
+          : db.addChat(ChatModel.fromChat(
+              msgs.children.last.value as Map<Object?, Object?>,
+              msgs.children.last.key.toString()));
       db.setLoader(false);
     }
   }

@@ -2,7 +2,10 @@ import 'package:chatting_app/helpers/style_sheet.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import '../Screens/Dashboard/Chats/GroupChats/add_group_participant.dart';
+import '../Screens/Dashboard/Settings/settings.dart';
 import '../app_config.dart';
+import '../controllers/firebase_controller.dart';
 
 class AppServices {
   /* Height and Width Factors */
@@ -99,4 +102,14 @@ class AppServices {
       gravity: ToastGravity.CENTER,
       toastLength: Toast.LENGTH_LONG,
       msg: msg);
+
+  static getPopUpRoute(String choice, BuildContext context) {
+    if (choice == "group") {
+      AppServices.pushTo(const AddGroupParticipants(), context);
+    } else if (choice == "settings") {
+      AppServices.pushTo(const SettingsView(), context);
+    } else {
+      FirebaseController().logOut(context);
+    }
+  }
 }

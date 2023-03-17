@@ -37,13 +37,23 @@ class ChatRoomModel {
   dynamic userdata;
   dynamic lastMsg;
   bool isGroupMsg;
+  String groupName;
+  String groupImg;
+  DateTime createdAt;
   List<String> members;
   ChatRoomModel(this.chatroomId, this.lastMsg, this.isGroupMsg, this.userdata,
-      this.members);
+      this.groupName, this.members, this.groupImg, this.createdAt);
   ChatRoomModel.fromChatrooms(
       Map<Object?, Object?> json, this.chatroomId, this.lastMsg, this.userdata)
       : isGroupMsg = json['isGroup'].toString() == "true" ? true : false,
-        members = (json['members'] as List).map((e) => e.toString()).toList();
+        members = (json['members'] as List).map((e) => e.toString()).toList(),
+        groupName = json["groupName"].toString() == ""
+            ? ""
+            : json["groupName"].toString(),
+        groupImg = json['groupImg'].toString() == ""
+            ? ""
+            : json['groupImg'].toString(),
+        createdAt = DateTime.parse(json['createdAt'].toString());
 }
 
 // class ChatroomsClass {

@@ -1,4 +1,4 @@
-import 'package:chatting_app/Screens/Dashboard/Chats/GroupChats/create_group.dart';
+import 'package:chatting_app/Screens/Dashboard/Chats/GroupChats/add_group_participant.dart';
 import 'package:chatting_app/Screens/Dashboard/Chats/chat_view_tab.dart';
 import 'package:chatting_app/Screens/Dashboard/Settings/settings.dart';
 import 'package:chatting_app/Screens/Dashboard/all_contacts_view.dart';
@@ -48,30 +48,16 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
         value: "group",
         child: const Text("New Group"),
       ),
-      // PopupMenuItem(onTap: () => {}, child: const Text("New Broadcast")),
-      // PopupMenuItem(onTap: () => {}, child: const Text("Linked Devices")),
-      // PopupMenuItem(onTap: () => {}, child: const Text("Starred messages")),
-      // PopupMenuItem(onTap: () => {}, child: const Text("Payments")),
-      const PopupMenuItem(
-          // onTap: () => {AppServices.pushTo(const SettingsView(), context)},
-          value: "settings",
-          child: Text("Settings")),
-      const PopupMenuItem(
-          // onTap: () => FirebaseController().logOut(context),
-          value: "logout",
-          child: Text("Logout")),
+      // PopupMenuItem( child: const Text("New Broadcast")),
+      // PopupMenuItem( child: const Text("Linked Devices")),
+      // PopupMenuItem( child: const Text("Starred messages")),
+      // PopupMenuItem( child: const Text("Payments")),
+      const PopupMenuItem(value: "settings", child: Text("Settings")),
+      const PopupMenuItem(value: "logout", child: Text("Logout")),
     ];
   }
 
-  getRoute(String choice) {
-    if (choice == "group") {
-      AppServices.pushTo(const CreateGroup(), context);
-    } else if (choice == "settings") {
-      AppServices.pushTo(const SettingsView(), context);
-    } else {
-      FirebaseController().logOut(context);
-    }
-  }
+
 
   @override
   void initState() {
@@ -169,7 +155,7 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
                             splashRadius: 20.r,
                             icon: const Icon(Icons.search)),
                         PopupMenuButton(
-                            onSelected: (value) => getRoute(value),
+                            onSelected: (value) => AppServices.getPopUpRoute(value, context),
                             position: PopupMenuPosition.over,
                             itemBuilder: (context) => popupOptions())
                       ],

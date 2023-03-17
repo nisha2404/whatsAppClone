@@ -26,7 +26,8 @@ lastSeenMessage(int lastSeen) {
   return finalMessage;
 }
 
-dynamic chatRoomAppBar(UserModel user, BuildContext context) {
+dynamic chatRoomAppBar(UserModel user, BuildContext context,
+    [ChatRoomModel? chatRoomModel]) {
   return AppBar(
     automaticallyImplyLeading: false,
     titleSpacing: 0,
@@ -47,25 +48,39 @@ dynamic chatRoomAppBar(UserModel user, BuildContext context) {
             width: 36.sp,
             decoration: const BoxDecoration(shape: BoxShape.circle),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(400.r),
-              child: user.image == ""
-                  ? Image.asset(AppImages.avatarPlaceholder, fit: BoxFit.cover)
-                  : CachedNetworkImage(
-                      imageUrl: user.image,
-                      placeholder: (context, url) =>
-                          ProfileImageShimmer(height: 150.sp, width: 150.sp)),
-            )),
+                borderRadius: BorderRadius.circular(400.r),
+                child: chatRoomModel != null
+                    ? CachedNetworkImage(imageUrl: chatRoomModel.groupImg)
+                    : (user.image == ""
+                        ? Image.asset(AppImages.avatarPlaceholder,
+                            fit: BoxFit.cover)
+                        : CachedNetworkImage(
+                            imageUrl: user.image,
+                            placeholder: (context, url) => ProfileImageShimmer(
+                                height: 150.sp, width: 150.sp))))),
         AppServices.addWidth(10.w),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(user.phoneNumber, style: GetTextTheme.sf16_bold),
               Text(
-                  user.isActive == true
-                      ? "Online"
-                      : "${lastSeenMessage(user.lastSeen)} ago",
-                  style: GetTextTheme.sf12_regular),
+                  chatRoomModel == null
+                      ? user.phoneNumber
+                      : chatRoomModel.groupName,
+                  style: GetTextTheme.sf16_bold),
+              chatRoomModel == null
+                  ? Text(
+                      user.isActive == true
+                          ? "Online"
+                          : "${lastSeenMessage(user.lastSeen)} ago",
+                      style: GetTextTheme.sf12_regular)
+                  : Row(children: [
+                      ...List.generate(
+                          1,
+                          (index) => Text(chatRoomModel.members[index],
+                              style: GetTextTheme.sf12_regular)),
+                      const Text("....", style: GetTextTheme.sf12_regular)
+                    ]),
             ],
           ),
         ),

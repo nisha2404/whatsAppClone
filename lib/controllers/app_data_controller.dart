@@ -2,7 +2,7 @@ import 'package:chatting_app/models/app_models.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-dynamic preferences;
+dynamic prefs;
 
 class AppDataController extends ChangeNotifier {
   String getTimeFormat(DateTime time) {
@@ -64,8 +64,18 @@ class AppDataController extends ChangeNotifier {
   }
 
   updateChatIsSeen() {
-    for (var chat in _chats) {
+    final chats = _chats.where((element) => element.isSeen == false).toList();
+    for (var chat in chats) {
       chat.isSeen = true;
+    }
+    notifyListeners();
+  }
+
+  updateChatIsDelivered() {
+    final chats =
+        _chats.where((element) => element.isDelivered == false).toList();
+    for (var chat in chats) {
+      chat.isDelivered = true;
     }
     notifyListeners();
   }

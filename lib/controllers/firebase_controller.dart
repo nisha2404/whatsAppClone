@@ -90,6 +90,7 @@ class FirebaseController {
 
 // function to check the message is seen by the target user or not.
   msgIsSeen(BuildContext context, String roomId) async {
+    final db = Provider.of<AppDataController>(context, listen: false);
     final path = database.ref("chatRoom/$roomId/chats");
     final snapshot = await path.get();
     if (snapshot.exists) {
@@ -165,17 +166,40 @@ class FirebaseController {
     return availableRooms;
   }
 
+  createGroupChatRoom(Map<String, dynamic> data) async {
+    final path = database.ref("chatRoom").push();
+    await path.set(data);
+  }
+
+  sendGroupMessage(String chatRoomId, String msg, String type) async {
+    Map<String, dynamic> data = {
+      "isDelivered": false,
+      "sender": auth.currentUser!.uid,
+      "sendAt": DateTime.now().toIso8601String(),
+      "message": msg,
+      "seen": false,
+      "type": type
+    };
+    final path = database.ref("chatRoom/$chatRoomId/chats").push();
+
+    await path.set(data);
+  }
+
 // function to create a chatRoom or if existing then send message to database.
   Future<bool> createChatRoom(
       Map<String, dynamic> data, String targetid, BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
-    db.setTempMsg(data);
+
     final List<ChatRoomModel> rooms = isChatRoomAvailable(context, targetid);
     if (rooms.isEmpty) {
+      db.setTempMsg(data);
       final path = database.ref("chatRoom").push();
       await path.set({
         "members": [targetid, auth.currentUser!.uid],
-        "isGroup": false
+        "isGroup": false,
+        "groupName": "",
+        "groupImg": "",
+        "createdAt": DateTime.now().toIso8601String()
       });
       return true;
     } else {
@@ -197,6 +221,9 @@ class FirebaseController {
   bool isSender(ChatModel chat) {
     return chat.sender == auth.currentUser!.uid;
   }
+
+  // function to check if the message is delivered or not.
+  isMsgDelivered() {}
 
 // function to get all the chats of a chatRoom.
   getChats(String chatRoomKey) async {

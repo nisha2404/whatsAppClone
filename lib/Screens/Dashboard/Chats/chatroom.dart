@@ -24,7 +24,8 @@ import '../../../helpers/style_sheet.dart';
 
 class ChatRoom extends StatefulWidget {
   UserModel user;
-  ChatRoom({super.key, required this.user});
+  ChatRoomModel? chatRoomModel;
+  ChatRoom({super.key, required this.user, this.chatRoomModel});
 
   @override
   State<ChatRoom> createState() => _ChatRoomState();
@@ -64,10 +65,16 @@ class _ChatRoomState extends State<ChatRoom> {
       FirebaseController().resetMessages(context);
     });
 
-    final path = database
-        .ref("chatRoom/${_chatRoom != null ? _chatRoom.chatroomId : ""}/chats");
+    final path = widget.chatRoomModel == null
+        ? database.ref(
+            "chatRoom/${_chatRoom != null ? _chatRoom.chatroomId : ""}/chats")
+        : database.ref("chatRoom/${widget.chatRoomModel!.chatroomId}/chats");
     _subscription = path.onChildAdded.listen((event) {
-      ChatHandler().onMsgSend(context, event, _chatRoom.chatroomId);
+      widget.chatRoomModel == null
+          ? ChatHandler()
+              .onMsgSend(context, event, _chatRoom.chatroomId, widget.user)
+          : ChatHandler()
+              .onGroupMsgSend(context, event, widget.chatRoomModel!.chatroomId);
     });
 
     _updateSubscription = path.onChildChanged.listen((event) {
@@ -75,12 +82,21 @@ class _ChatRoomState extends State<ChatRoom> {
     });
   }
 
+  @override
+  void dispose() {
+    _subscription.cancel();
+    _updateSubscription.cancel();
+    super.dispose();
+  }
+
   void _scrollDown() {
-    _controller.animateTo(
-      _controller.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 100),
-      curve: Curves.easeInOut,
-    );
+    if (_controller.hasClients) {
+      _controller.animateTo(
+        _controller.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   bool emojiShowing = false;
@@ -136,7 +152,7 @@ class _ChatRoomState extends State<ChatRoom> {
         },
         child: Scaffold(
           backgroundColor: AppColors.grey100,
-          appBar: chatRoomAppBar(widget.user, context),
+          appBar: chatRoomAppBar(widget.user, context, widget.chatRoomModel),
           body: SafeArea(
               child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -178,15 +194,22 @@ class _ChatRoomState extends State<ChatRoom> {
                   onSendBtnPressed: () async {
                     msgType == "text"
                         ? {
-                            await FirebaseController().createChatRoom({
-                              "sender": auth.currentUser!.uid,
-                              "sendAt": DateTime.now().toIso8601String(),
-                              "message": _msgCtrl.text,
-                              "seen": false,
-                              "type": "text"
-                            }, widget.user.uid, context)
+                            widget.chatRoomModel == null
+                                ? await FirebaseController().createChatRoom({
+                                    "isDelivered": false,
+                                    "sender": auth.currentUser!.uid,
+                                    "sendAt": DateTime.now().toIso8601String(),
+                                    "message": _msgCtrl.text,
+                                    "seen": false,
+                                    "type": "text"
+                                  }, widget.user.uid, context)
+                                : FirebaseController().sendGroupMessage(
+                                    widget.chatRoomModel!.chatroomId,
+                                    _msgCtrl.text,
+                                    "text")
                           }
-                        : await uploadImage();
+                        : await uploadImage(widget.chatRoomModel!.isGroupMsg,
+                            widget.chatRoomModel!.chatroomId);
                     _msgCtrl.clear();
                     _scrollDown();
                   },
@@ -245,7 +268,7 @@ class _ChatRoomState extends State<ChatRoom> {
     }
   }
 
-  uploadImage() async {
+  uploadImage(bool isGroup, [String chatRoomId = ""]) async {
     setState(() {
       isUploadImage = true;
     });
@@ -259,15 +282,23 @@ class _ChatRoomState extends State<ChatRoom> {
     try {
       await referenceRoot.putFile(File(croppedImg!.path));
       imageUrl = await referenceRoot.getDownloadURL();
-      await FirebaseController().createChatRoom({
-        "sender": auth.currentUser!.uid,
-        "message": _msgCtrl.text.isNotEmpty
-            ? "${imageUrl}__${_msgCtrl.text}"
-            : imageUrl,
-        "type": _msgCtrl.text.isNotEmpty ? "imageWithText" : "image",
-        "sendAt": DateTime.now().toIso8601String(),
-        "seen": false,
-      }, widget.user.uid, context);
+      isGroup
+          ? await FirebaseController().sendGroupMessage(
+              chatRoomId,
+              _msgCtrl.text.isNotEmpty
+                  ? "${imageUrl}__${_msgCtrl.text}"
+                  : imageUrl,
+              _msgCtrl.text.isNotEmpty ? "imageWithText" : "image")
+          : await FirebaseController().createChatRoom({
+              "isDelivered": false,
+              "sender": auth.currentUser!.uid,
+              "message": _msgCtrl.text.isNotEmpty
+                  ? "${imageUrl}__${_msgCtrl.text}"
+                  : imageUrl,
+              "type": _msgCtrl.text.isNotEmpty ? "imageWithText" : "image",
+              "sendAt": DateTime.now().toIso8601String(),
+              "seen": false,
+            }, widget.user.uid, context);
 
       setState(() {
         isShowStackContainer = false;

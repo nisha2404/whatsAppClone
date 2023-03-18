@@ -40,12 +40,22 @@ class ChatRoomModel {
   String groupName;
   String groupImg;
   DateTime createdAt;
+  int newChats;
   List<String> members;
-  ChatRoomModel(this.chatroomId, this.lastMsg, this.isGroupMsg, this.userdata,
-      this.groupName, this.members, this.groupImg, this.createdAt);
+  ChatRoomModel(
+      this.chatroomId,
+      this.lastMsg,
+      this.isGroupMsg,
+      this.userdata,
+      this.groupName,
+      this.members,
+      this.groupImg,
+      this.createdAt,
+      this.newChats);
   ChatRoomModel.fromChatrooms(
       Map<Object?, Object?> json, this.chatroomId, this.lastMsg, this.userdata)
       : isGroupMsg = json['isGroup'].toString() == "true" ? true : false,
+        newChats = 0,
         members = (json['members'] as List).map((e) => e.toString()).toList(),
         groupName = json["groupName"].toString() == ""
             ? ""

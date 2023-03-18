@@ -38,9 +38,12 @@ class ChatHandler {
   }
 
 // event listener to get the updates of change in any message on database.
-  static onMsgUpdated(BuildContext context) {
-    final services = Provider.of<AppDataController>(context, listen: false);
-    services.updateChatIsSeen();
+  static onMsgUpdated(BuildContext context, DatabaseEvent event) {
+    if ((event.snapshot.value as Map<Object?, Object?>)['seen'].toString() ==
+        "true") {
+      final services = Provider.of<AppDataController>(context, listen: false);
+      services.updateChatIsSeen();
+    }
   }
 
 // event listener to get the chatrooms after adding a new chatRoom on database.
@@ -48,8 +51,7 @@ class ChatHandler {
     final db = Provider.of<AppDataController>(context, listen: false);
     db.setLoader(true);
     final value = event.snapshot.value as Map<Object?, Object?>;
-    final members =
-        (value['members'] as List).map((e) => e.toString()).toList();
+    final members = (value['members'] as List);
     final targetUserId =
         members.firstWhere((element) => element != auth.currentUser!.uid);
     final chatRoom = db.getAllChatRooms;
@@ -86,6 +88,8 @@ class ChatHandler {
         }
       }
 
+      currentChatroomId = event.snapshot.key;
+
       db.addChatRoom(ChatRoomModel.fromChatrooms(
           value,
           event.snapshot.key.toString(),
@@ -103,6 +107,34 @@ class ChatHandler {
               msgs.children.last.value as Map<Object?, Object?>,
               msgs.children.last.key.toString()));
       db.setLoader(false);
+    }
+  }
+
+  setLastMsg(DatabaseEvent event, BuildContext context) async {
+    final db = Provider.of<AppDataController>(context, listen: false);
+    if (event.snapshot.exists) {
+      var roomId = event.snapshot.key;
+      bool isRoomAvailable = db.getAllChatRooms
+          .any((element) => element.chatroomId == event.snapshot.key);
+
+      if (isRoomAvailable) {
+        final path = database.ref("chatRoom/$roomId/chats");
+        final chats = await path.get();
+        db.setLastMsg(
+            roomId.toString(),
+            ChatModel.fromChat(
+                chats.children.last.value as Map<Object?, Object?>,
+                chats.children.last.key.toString()));
+        int unreadChats = chats.children
+            .where((element) =>
+                (element.value as Map<Object?, Object?>)['seen'].toString() ==
+                "false")
+            .toList()
+            .length;
+        db.setUnradMessages(roomId.toString(), unreadChats);
+      } else {
+        null;
+      }
     }
   }
 }

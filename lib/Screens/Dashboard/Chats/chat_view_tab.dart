@@ -57,75 +57,91 @@ class _ChatViewTabState extends State<ChatViewTab> {
 
                   // getUsers();
                   return ListTile(
-                    onTap: () => AppServices.pushTo(
-                        ChatRoom(
-                            user: user,
-                            chatRoomModel: chatRooms[i].isGroupMsg == true
-                                ? chatRooms[i]
-                                : null),
-                        context),
-                    leading: Container(
-                        height: 45.sp,
-                        width: 45.sp,
-                        decoration: const BoxDecoration(shape: BoxShape.circle),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(400.r),
-                          child: chatRooms[i].isGroupMsg
-                              ? CachedNetworkImage(
-                                  imageUrl: chatRooms[i].groupImg,
-                                  placeholder: (context, url) =>
-                                      ProfileImageShimmer(
-                                          height: 150.sp, width: 150.sp),
-                                )
-                              : (user.image == ""
-                                  ? Image.asset(AppImages.avatarPlaceholder,
-                                      fit: BoxFit.cover)
-                                  : CachedNetworkImage(
-                                      imageUrl: user.image,
-                                      placeholder: (context, url) =>
-                                          ProfileImageShimmer(
-                                              height: 150.sp, width: 150.sp))),
-                        )),
-                    title: Text(
-                        chatRooms[i].isGroupMsg
-                            ? chatRooms[i].groupName
-                            : user.phoneNumber,
-                        style: GetTextTheme.sf16_bold),
-                    subtitle: lastmsg == null
-                        ? const SizedBox()
-                        : Row(
-                            children: [
-                              FirebaseController().isSender(lastmsg)
-                                  ? lastmsg.isDelivered == false
-                                      ? Icon(Icons.done,
-                                          size: 18.sp, color: AppColors.grey150)
-                                      : Icon(Icons.done_all,
-                                          size: 18.sp,
-                                          color: lastmsg.isSeen
-                                              ? AppColors.primaryColor
-                                              : AppColors.grey150)
-                                  : const SizedBox(),
-                              AppServices.addWidth(5.w),
-                              Expanded(
-                                child: Text(
-                                    lastmsg.msgType == "text"
-                                        ? lastmsg.msg
-                                        : lastmsg.msgType == "imageWithText"
-                                            ? lastmsg.msg.split("__").last
-                                            : "📸 Image",
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GetTextTheme.sf14_regular
-                                        .copyWith(color: AppColors.grey150)),
-                              ),
-                            ],
-                          ),
-                    trailing: lastmsg == null
-                        ? const SizedBox()
-                        : Text(db.getTimeFormat(lastmsg.sendAt),
-                            style: GetTextTheme.sf12_regular
-                                .copyWith(color: AppColors.grey150)),
-                  );
+                      onTap: () => AppServices.pushTo(
+                          ChatRoom(
+                              user: user,
+                              chatRoomModel: chatRooms[i].isGroupMsg == true
+                                  ? chatRooms[i]
+                                  : null),
+                          context),
+                      leading: Container(
+                          height: 45.sp,
+                          width: 45.sp,
+                          decoration:
+                              const BoxDecoration(shape: BoxShape.circle),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(400.r),
+                            child: chatRooms[i].isGroupMsg
+                                ? CachedNetworkImage(
+                                    imageUrl: chatRooms[i].groupImg,
+                                    placeholder: (context, url) =>
+                                        ProfileImageShimmer(
+                                            height: 150.sp, width: 150.sp),
+                                  )
+                                : (user.image == ""
+                                    ? Image.asset(AppImages.avatarPlaceholder,
+                                        fit: BoxFit.cover)
+                                    : CachedNetworkImage(
+                                        imageUrl: user.image,
+                                        placeholder: (context, url) =>
+                                            ProfileImageShimmer(
+                                                height: 150.sp,
+                                                width: 150.sp))),
+                          )),
+                      title: Text(
+                          chatRooms[i].isGroupMsg
+                              ? chatRooms[i].groupName
+                              : user.phoneNumber,
+                          style: GetTextTheme.sf16_bold),
+                      subtitle: lastmsg == null
+                          ? const SizedBox()
+                          : Row(
+                              children: [
+                                FirebaseController().isSender(lastmsg)
+                                    ? lastmsg.isDelivered == false
+                                        ? Icon(Icons.done,
+                                            size: 18.sp,
+                                            color: AppColors.grey150)
+                                        : Icon(Icons.done_all,
+                                            size: 18.sp,
+                                            color: lastmsg.isSeen
+                                                ? AppColors.primaryColor
+                                                : AppColors.grey150)
+                                    : const SizedBox(),
+                                AppServices.addWidth(5.w),
+                                Expanded(
+                                  child: Text(
+                                      lastmsg.msgType == "text"
+                                          ? lastmsg.msg
+                                          : lastmsg.msgType == "imageWithText"
+                                              ? lastmsg.msg.split("__").last
+                                              : "📸 Image",
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GetTextTheme.sf14_regular
+                                          .copyWith(color: AppColors.grey150)),
+                                ),
+                              ],
+                            ),
+                      trailing: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          lastmsg == null
+                              ? const SizedBox()
+                              : Text(db.getTimeFormat(lastmsg.sendAt),
+                                  style: GetTextTheme.sf12_regular
+                                      .copyWith(color: AppColors.grey150)),
+                          FirebaseController().isSender(chatRooms[i].lastMsg)
+                              ? const SizedBox()
+                              : (chatRooms[i].newChats == 0
+                                  ? const SizedBox()
+                                  : Text(
+                                      "${chatRooms[i].newChats.toString()} new messages",
+                                      style: GetTextTheme.sf12_regular.copyWith(
+                                          color: AppColors.primaryColor)))
+                        ],
+                      ));
                 }));
   }
 }

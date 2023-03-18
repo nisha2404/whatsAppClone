@@ -1,6 +1,4 @@
-import 'package:chatting_app/Screens/Dashboard/Chats/GroupChats/add_group_participant.dart';
 import 'package:chatting_app/Screens/Dashboard/Chats/chat_view_tab.dart';
-import 'package:chatting_app/Screens/Dashboard/Settings/settings.dart';
 import 'package:chatting_app/Screens/Dashboard/all_contacts_view.dart';
 import 'package:chatting_app/Screens/Dashboard/calls/call_view_tab.dart';
 import 'package:chatting_app/Screens/Dashboard/community/community_view_tab.dart';
@@ -57,8 +55,6 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
     ];
   }
 
-
-
   @override
   void initState() {
     super.initState();
@@ -72,6 +68,9 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
     final path = _firebase.ref("chatRoom");
     path.onChildAdded.listen((event) {
       ChatHandler().onChatRoomAdded(context, event);
+    });
+    path.onChildChanged.listen((event) {
+      ChatHandler().setLastMsg(event, context);
     });
     WidgetsBinding.instance.addObserver(this);
     setStatus(true);
@@ -155,7 +154,8 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
                             splashRadius: 20.r,
                             icon: const Icon(Icons.search)),
                         PopupMenuButton(
-                            onSelected: (value) => AppServices.getPopUpRoute(value, context),
+                            onSelected: (value) =>
+                                AppServices.getPopUpRoute(value, context),
                             position: PopupMenuPosition.over,
                             itemBuilder: (context) => popupOptions())
                       ],

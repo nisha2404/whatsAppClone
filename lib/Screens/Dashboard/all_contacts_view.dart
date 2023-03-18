@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:chatting_app/Screens/Dashboard/Chats/chatroom.dart';
 import 'package:chatting_app/controllers/app_data_controller.dart';
@@ -5,6 +7,7 @@ import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/base_getters.dart';
 import 'package:chatting_app/helpers/style_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -23,7 +26,24 @@ class _AllContactsViewState extends State<AllContactsView> {
   @override
   void initState() {
     super.initState();
+    initialize();
+  }
+
+  initialize() async {
+    if (!await rebuild()) return;
     FirebaseController().getAllUsers(context);
+  }
+
+  Future<bool> rebuild() async {
+    if (!mounted) return false;
+    // if there's a current frame,
+    if (SchedulerBinding.instance.schedulerPhase != SchedulerPhase.idle) {
+      // wait for the end of that frame.
+      await SchedulerBinding.instance.endOfFrame;
+      if (!mounted) return false;
+    }
+    setState(() {});
+    return true;
   }
 
   @override

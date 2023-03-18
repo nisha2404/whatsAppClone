@@ -48,8 +48,10 @@ class _ChatRoomState extends State<ChatRoom> {
   }
 
   initialize() async {
-    var room =
-        FirebaseController().isChatRoomAvailable(context, widget.user.uid);
+    var room = FirebaseController()
+        .isChatRoomAvailable(context, widget.user.uid)
+        .where((element) => element.isGroupMsg == false)
+        .toList();
     if (room.isNotEmpty) {
       setState(() {
         _chatRoom = room.first;
@@ -78,7 +80,7 @@ class _ChatRoomState extends State<ChatRoom> {
     });
 
     _updateSubscription = path.onChildChanged.listen((event) {
-      ChatHandler.onMsgUpdated(context);
+      ChatHandler.onMsgUpdated(context, event);
     });
   }
 

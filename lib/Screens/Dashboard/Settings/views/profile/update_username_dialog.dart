@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, must_be_immutable
 
 import 'package:chatting_app/components/expanded_button.dart';
 import 'package:chatting_app/components/underline_input_border_textfield.dart';
@@ -12,10 +12,24 @@ import '../../../../../controllers/app_data_controller.dart';
 import '../../../../../controllers/firebase_controller.dart';
 import '../../../../../models/app_models.dart';
 
-class UpdateUsernameDialog extends StatelessWidget {
-  UpdateUsernameDialog({super.key});
+class UpdateUsernameDialog extends StatefulWidget {
+  String username;
+  UpdateUsernameDialog({super.key, required this.username});
 
+  @override
+  State<UpdateUsernameDialog> createState() => _UpdateUsernameDialogState();
+}
+
+class _UpdateUsernameDialogState extends State<UpdateUsernameDialog> {
   final TextEditingController _username = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      _username.text = widget.username;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

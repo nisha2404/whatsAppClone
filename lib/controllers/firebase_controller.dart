@@ -190,7 +190,9 @@ class FirebaseController {
       Map<String, dynamic> data, String targetid, BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
 
-    final List<ChatRoomModel> rooms = isChatRoomAvailable(context, targetid);
+    final List<ChatRoomModel> rooms = isChatRoomAvailable(context, targetid)
+        .where((element) => element.isGroupMsg == false)
+        .toList();
     if (rooms.isEmpty) {
       db.setTempMsg(data);
       final path = database.ref("chatRoom").push();

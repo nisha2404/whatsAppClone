@@ -5,6 +5,7 @@ import 'package:chatting_app/models/app_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../components/shimmers/profile_img_shimmer.dart';
 import '../../../../helpers/base_getters.dart';
@@ -17,10 +18,12 @@ lastSeenMessage(int lastSeen) {
       now.difference(DateTime.fromMillisecondsSinceEpoch(lastSeen));
   String finalMessage = differenceDuration.inSeconds > 59
       ? differenceDuration.inMinutes > 59
-          ? differenceDuration.inDays > 23
-              ? "${differenceDuration.inDays} ${differenceDuration.inDays == 1 ? 'day' : "days"}"
-              : "${differenceDuration.inHours} ${differenceDuration.inHours == 1 ? "hour" : "hours"}"
-          : "${differenceDuration.inMinutes} ${differenceDuration.inMinutes == 1 ? "minute" : "minutes"}"
+          ? differenceDuration.inHours > 23
+              ? differenceDuration.inDays > 3
+                  ? "last seen on ${DateFormat("dd-mm-yyyy hh:mm a").format(DateTime.fromMillisecondsSinceEpoch(lastSeen))}"
+                  : "${differenceDuration.inDays} ${differenceDuration.inDays == 1 ? 'day' : "days"} ago"
+              : "${differenceDuration.inHours} ${differenceDuration.inHours == 1 ? "hour" : "hours"} ago"
+          : "${differenceDuration.inMinutes} ${differenceDuration.inMinutes == 1 ? "minute" : "minutes"} ago"
       : "few Moments";
 
   return finalMessage;
@@ -72,14 +75,15 @@ dynamic chatRoomAppBar(UserModel user, BuildContext context,
                   ? Text(
                       user.isActive == true
                           ? "Online"
-                          : "${lastSeenMessage(user.lastSeen)} ago",
+                          : "${lastSeenMessage(user.lastSeen)}",
                       style: GetTextTheme.sf12_regular)
                   : Row(children: [
                       ...List.generate(
                           1,
-                          (index) => Text(chatRoomModel.members[index],
-                              style: GetTextTheme.sf12_regular)),
-                      const Text("....", style: GetTextTheme.sf12_regular)
+                          (index) => Expanded(
+                                child: Text(chatRoomModel.members[index],
+                                    style: GetTextTheme.sf12_regular),
+                              )),
                     ]),
             ],
           ),

@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, must_be_immutable
 
 import 'package:chatting_app/components/expanded_button.dart';
 import 'package:chatting_app/components/underline_input_border_textfield.dart';
@@ -11,10 +11,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-class UpdateuserAboutDialog extends StatelessWidget {
-  UpdateuserAboutDialog({super.key});
+class UpdateuserAboutDialog extends StatefulWidget {
+  String about;
+  UpdateuserAboutDialog({super.key, required this.about});
 
-  final TextEditingController _about = TextEditingController();
+  @override
+  State<UpdateuserAboutDialog> createState() => _UpdateuserAboutDialogState();
+}
+
+class _UpdateuserAboutDialogState extends State<UpdateuserAboutDialog> {
+  TextEditingController about = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      about.text = widget.about;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +43,7 @@ class UpdateuserAboutDialog extends StatelessWidget {
             const Text("Update About", style: GetTextTheme.sf18_bold),
             AppServices.addHeight(10.h),
             UnderlineInputBorderTextField(
-              controller: _about,
+              controller: about,
             ),
             AppServices.addHeight(20.sp),
             Row(
@@ -51,9 +65,9 @@ class UpdateuserAboutDialog extends StatelessWidget {
   }
 
   updateUserAbout(BuildContext context) async {
-    if (_about.text.isNotEmpty) {
+    if (about.text.isNotEmpty) {
       final path = database.ref("users/${auth.currentUser!.uid}");
-      await path.update({"about": _about.text});
+      await path.update({"about": about.text});
       await path.get().then((value) {
         final db = Provider.of<AppDataController>(context, listen: false);
         db.setCurrentUser(UserModel.fromUser(

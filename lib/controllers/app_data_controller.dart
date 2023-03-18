@@ -111,6 +111,13 @@ class AppDataController extends ChangeNotifier {
     notifyListeners();
   }
 
+  setUnradMessages(String chatRoomId, int unreadMessages) {
+    int index =
+        _chatRooms.indexWhere((element) => element.chatroomId == chatRoomId);
+    _chatRooms[index].newChats = unreadMessages;
+    notifyListeners();
+  }
+
   Map<String, dynamic> _tempMsg = {};
   Map<String, dynamic> get getMsg => _tempMsg;
 

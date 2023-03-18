@@ -118,7 +118,8 @@ class _ProfileViewState extends State<ProfileView> {
             detail_tile(
                 () => showDialog(
                     context: context,
-                    builder: (context) => UpdateUsernameDialog()),
+                    builder: (context) =>
+                        UpdateUsernameDialog(username: user.userName)),
                 true,
                 AppIcons.profileIcon,
                 "Name",
@@ -134,7 +135,8 @@ class _ProfileViewState extends State<ProfileView> {
             detail_tile(
                 () => showDialog(
                     context: context,
-                    builder: (context) => UpdateuserAboutDialog()),
+                    builder: (context) =>
+                        UpdateuserAboutDialog(about: user.aboutUser)),
                 true,
                 AppIcons.infoIcon,
                 "About",

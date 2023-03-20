@@ -101,13 +101,13 @@ class FirebaseController {
       } else {
         final db = Provider.of<AppDataController>(context, listen: false);
         var data = db.getIndividualChats
-            .where((element) => element.isSeen == false)
+            .where((element) => element.status == MessageStatus.delivered)
             .toList()
             .map((e) => e.msgId)
             .toList();
         for (var msgid in data) {
           final msgPath = database.ref("chatRoom/$roomId/chats/$msgid");
-          await msgPath.update({"seen": true});
+          await msgPath.update({"status": MessageStatus.seen.name});
         }
       }
     }
@@ -121,6 +121,7 @@ class FirebaseController {
             db.setLoader(true),
             getCurrentUser(context),
             await getAllUsers(context),
+            // await getallChatRooms(context),
             db.setLoader(false),
             AppServices.fadeTransitionNavigation(context, const Dashboard())
           }
@@ -166,18 +167,32 @@ class FirebaseController {
     return availableRooms;
   }
 
+// function to create a group
   createGroupChatRoom(Map<String, dynamic> data) async {
     final path = database.ref("chatRoom").push();
     await path.set(data);
   }
 
+  // getallChatRooms(BuildContext context) async {
+  //   final db = Provider.of<AppDataController>(context, listen: false);
+  //   final path = database.ref("chatRoom");
+  //   final snapshot = await path.get();
+  //   if (snapshot.exists) {
+  //     final List<ChatRoomModel> rooms = [];
+  //     final chatRoomList = snapshot.children.where((element) =>
+  //         ((element.value as Map<Object?, Object?>)['members'] as List)
+  //             .contains(auth.currentUser!.uid)).toList();
+  //             final targetUserId = snapshot.children.map((e) => ((e.value as Map<Object?, Object?>)['members'] as List).firstWhere((element) => element != auth.currentUser!.uid)).toList();
+  //   }
+  // }
+
+// function to send message in the group
   sendGroupMessage(String chatRoomId, String msg, String type) async {
     Map<String, dynamic> data = {
-      "isDelivered": false,
+      "status": MessageStatus.sent.name,
       "sender": auth.currentUser!.uid,
       "sendAt": DateTime.now().toIso8601String(),
       "message": msg,
-      "seen": false,
       "type": type
     };
     final path = database.ref("chatRoom/$chatRoomId/chats").push();
@@ -225,7 +240,6 @@ class FirebaseController {
   }
 
   // function to check if the message is delivered or not.
-  isMsgDelivered() {}
 
 // function to get all the chats of a chatRoom.
   getChats(String chatRoomKey) async {

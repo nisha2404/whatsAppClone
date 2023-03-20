@@ -3,7 +3,6 @@ import 'package:chatting_app/Screens/Dashboard/all_contacts_view.dart';
 import 'package:chatting_app/Screens/Dashboard/calls/call_view_tab.dart';
 import 'package:chatting_app/Screens/Dashboard/community/community_view_tab.dart';
 import 'package:chatting_app/Screens/Dashboard/status/status_view_tab.dart';
-import 'package:chatting_app/controllers/app_data_controller.dart';
 import 'package:chatting_app/controllers/chat_handler.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/base_getters.dart';
@@ -12,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
 
 import '../../../../helpers/icons_and_images.dart';
 import '../../app_config.dart';
@@ -62,15 +60,20 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
   }
 
   getSession() async {
-    final db = Provider.of<AppDataController>(context, listen: false);
-    if (!await rebuild()) return;
-    db.setLoader(true);
+    // final db = Provider.of<AppDataController>(context, listen: false);
+    // if (!await rebuild()) return;
+    // db.setLoader(true);
     final path = _firebase.ref("chatRoom");
-    path.onChildAdded.listen((event) {
-      ChatHandler().onChatRoomAdded(context, event);
+    // .equalTo(auth.currentUser!.uid);
+    final path2 = database.ref("users");
+    path.onChildAdded.listen((event) async {
+      await ChatHandler().onChatRoomAdded(context, event);
     });
     path.onChildChanged.listen((event) {
-      ChatHandler().setLastMsg(event, context);
+      ChatHandler().setData(event, context);
+    });
+    path2.onChildChanged.listen((event) {
+      ChatHandler().setUserData(event, context);
     });
     WidgetsBinding.instance.addObserver(this);
     setStatus(true);

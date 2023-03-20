@@ -41,6 +41,12 @@ class AppDataController extends ChangeNotifier {
     notifyListeners();
   }
 
+  updateUser(int index, bool isActive, int lastSeen) {
+    _chatRooms[index].userdata.isActive = isActive;
+    _chatRooms[index].userdata.lastSeen = lastSeen;
+    notifyListeners();
+  }
+
   List<ChatModel> _chats = [];
 
   List<ChatModel> get getIndividualChats => _chats;
@@ -64,18 +70,21 @@ class AppDataController extends ChangeNotifier {
   }
 
   updateChatIsSeen() {
-    final chats = _chats.where((element) => element.isSeen == false).toList();
+    final chats = _chats
+        .where((element) => element.status == MessageStatus.delivered)
+        .toList();
     for (var chat in chats) {
-      chat.isSeen = true;
+      chat.status = MessageStatus.seen;
     }
     notifyListeners();
   }
 
   updateChatIsDelivered() {
-    final chats =
-        _chats.where((element) => element.isDelivered == false).toList();
+    final chats = _chats
+        .where((element) => element.status == MessageStatus.sent)
+        .toList();
     for (var chat in chats) {
-      chat.isDelivered = true;
+      chat.status = MessageStatus.delivered;
     }
     notifyListeners();
   }
@@ -94,6 +103,8 @@ class AppDataController extends ChangeNotifier {
   }
 
   addChatRoom(ChatRoomModel chatRoom) {
+    if (_chatRooms.any((element) => element.chatroomId == chatRoom.chatroomId))
+      return;
     _chatRooms.add(chatRoom);
     notifyListeners();
   }

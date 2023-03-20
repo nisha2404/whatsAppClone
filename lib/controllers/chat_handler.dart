@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:chatting_app/controllers/app_data_controller.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/models/app_models.dart';
@@ -26,21 +28,26 @@ class ChatHandler {
     final msg = ChatModel.fromChat(
         event.snapshot.value as Map<Object?, Object?>,
         event.snapshot.key.toString());
-    FirebaseController().msgIsSeen(context, chatRoomId);
     db.addChat(msg);
     db.setLastMsg(chatRoomId, msg);
+    final msgStatus =
+        (event.snapshot.value as Map<Object?, Object?>)['status'].toString();
     if (targetUser.isActive) {
-      await database
-          .ref("chatRoom/$chatRoomId/chats/${event.snapshot.key}")
-          .update({"isDelivered": true});
-      db.updateChatIsDelivered();
+      if (msgStatus == MessageStatus.sent.name) {
+        await database
+            .ref("chatRoom/$chatRoomId/chats/${event.snapshot.key}")
+            .update({"status": MessageStatus.delivered.name});
+        db.updateChatIsDelivered();
+      }
     }
+    FirebaseController().msgIsSeen(context, chatRoomId);
   }
 
 // event listener to get the updates of change in any message on database.
   static onMsgUpdated(BuildContext context, DatabaseEvent event) {
-    if ((event.snapshot.value as Map<Object?, Object?>)['seen'].toString() ==
-        "true") {
+    final msgStatus =
+        (event.snapshot.value as Map<Object?, Object?>)['status'].toString();
+    if (msgStatus == MessageStatus.seen.name) {
       final services = Provider.of<AppDataController>(context, listen: false);
       services.updateChatIsSeen();
     }
@@ -49,7 +56,7 @@ class ChatHandler {
 // event listener to get the chatrooms after adding a new chatRoom on database.
   onChatRoomAdded(BuildContext context, DatabaseEvent event) async {
     final db = Provider.of<AppDataController>(context, listen: false);
-    db.setLoader(true);
+
     final value = event.snapshot.value as Map<Object?, Object?>;
     final members = (value['members'] as List);
     final targetUserId =
@@ -59,7 +66,8 @@ class ChatHandler {
     final userpath = database.ref("users/$targetUserId");
     final chatPath = database.ref("chatRoom/${event.snapshot.key}/chats");
 
-    if (chatRoom.any((element) => element.chatroomId == event.snapshot.key)) {
+    if (chatRoom.any(
+        (element) => element.chatroomId == event.snapshot.key.toString())) {
       null;
       db.setLoader(false);
     } else {
@@ -75,21 +83,6 @@ class ChatHandler {
       final user = await userpath.get();
       final msgs = await chatPath.get();
 
-      if ((user.value as Map<Object?, Object?>)['isActive'] == true) {
-        var messages = msgs.children
-            .where((element) =>
-                (element.value as Map<Object?, Object?>)['isDelivered'] ==
-                false)
-            .toList();
-        for (var msg in messages) {
-          final path =
-              database.ref("chatRoom/${event.snapshot.key}/chats/${msg.key}");
-          await path.update({"isDelivered": true});
-        }
-      }
-
-      currentChatroomId = event.snapshot.key;
-
       db.addChatRoom(ChatRoomModel.fromChatrooms(
           value,
           event.snapshot.key.toString(),
@@ -101,16 +94,12 @@ class ChatHandler {
           UserModel.fromUser(
               user.value as Map<Object?, Object?>, user.key.toString())));
 
-      msgs.children.isEmpty
-          ? null
-          : db.addChat(ChatModel.fromChat(
-              msgs.children.last.value as Map<Object?, Object?>,
-              msgs.children.last.key.toString()));
       db.setLoader(false);
     }
   }
 
-  setLastMsg(DatabaseEvent event, BuildContext context) async {
+// function to set data in provider on change in any value in chatRoom.
+  setData(DatabaseEvent event, BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);
     if (event.snapshot.exists) {
       var roomId = event.snapshot.key;
@@ -127,8 +116,8 @@ class ChatHandler {
                 chats.children.last.key.toString()));
         int unreadChats = chats.children
             .where((element) =>
-                (element.value as Map<Object?, Object?>)['seen'].toString() ==
-                "false")
+                (element.value as Map<Object?, Object?>)['status'].toString() ==
+                MessageStatus.delivered.name)
             .toList()
             .length;
         db.setUnradMessages(roomId.toString(), unreadChats);
@@ -136,5 +125,27 @@ class ChatHandler {
         null;
       }
     }
+  }
+
+// function to update user data in provider on change in any value in users database.
+  setUserData(DatabaseEvent event, BuildContext context) async {
+    final userId = event.snapshot.key.toString();
+    final path = database.ref("users/$userId");
+    final db = Provider.of<AppDataController>(context, listen: false);
+    final chatRooms = db.getAllChatRooms.map((e) => e.userdata).toList();
+    final isUpdatable = chatRooms
+        .where((element) => element.uid == event.snapshot.key.toString())
+        .toList();
+    if (isUpdatable.isEmpty) return;
+    final user = await path.get();
+    final index = db.getAllChatRooms
+        .indexWhere((element) => element.userdata == isUpdatable.first);
+    db.updateUser(
+        index,
+        (user.value as Map<Object?, Object?>)['isActive'].toString() == "true"
+            ? true
+            : false,
+        int.parse(
+            (user.value as Map<Object?, Object?>)['lastSeen'].toString()));
   }
 }

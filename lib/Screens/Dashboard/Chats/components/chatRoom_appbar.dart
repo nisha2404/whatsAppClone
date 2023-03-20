@@ -24,7 +24,7 @@ lastSeenMessage(int lastSeen) {
                   : "${differenceDuration.inDays} ${differenceDuration.inDays == 1 ? 'day' : "days"} ago"
               : "${differenceDuration.inHours} ${differenceDuration.inHours == 1 ? "hour" : "hours"} ago"
           : "${differenceDuration.inMinutes} ${differenceDuration.inMinutes == 1 ? "minute" : "minutes"} ago"
-      : "few Moments";
+      : "Offline";
 
   return finalMessage;
 }

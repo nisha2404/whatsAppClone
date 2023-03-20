@@ -198,11 +198,10 @@ class _ChatRoomState extends State<ChatRoom> {
                         ? {
                             widget.chatRoomModel == null
                                 ? await FirebaseController().createChatRoom({
-                                    "isDelivered": false,
+                                    "status": MessageStatus.sent.name,
                                     "sender": auth.currentUser!.uid,
                                     "sendAt": DateTime.now().toIso8601String(),
                                     "message": _msgCtrl.text,
-                                    "seen": false,
                                     "type": "text"
                                   }, widget.user.uid, context)
                                 : FirebaseController().sendGroupMessage(
@@ -292,14 +291,13 @@ class _ChatRoomState extends State<ChatRoom> {
                   : imageUrl,
               _msgCtrl.text.isNotEmpty ? "imageWithText" : "image")
           : await FirebaseController().createChatRoom({
-              "isDelivered": false,
+              "status": MessageStatus.sent.name,
               "sender": auth.currentUser!.uid,
               "message": _msgCtrl.text.isNotEmpty
                   ? "${imageUrl}__${_msgCtrl.text}"
                   : imageUrl,
               "type": _msgCtrl.text.isNotEmpty ? "imageWithText" : "image",
               "sendAt": DateTime.now().toIso8601String(),
-              "seen": false,
             }, widget.user.uid, context);
 
       setState(() {

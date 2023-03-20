@@ -41,7 +41,7 @@ class _ChatViewTabState extends State<ChatViewTab> {
                   const Expanded(flex: 1, child: SizedBox()),
                   Image.asset(AppGiffs.chatGiff2, fit: BoxFit.cover),
                   const Text(
-                      "Start your first conversation by tapping on the button below.",
+                      "Start a new conversation by tapping on the button below.",
                       textAlign: TextAlign.center,
                       style: GetTextTheme.sf22_bold),
                   const Expanded(flex: 3, child: SizedBox()),
@@ -64,30 +64,47 @@ class _ChatViewTabState extends State<ChatViewTab> {
                                   ? chatRooms[i]
                                   : null),
                           context),
-                      leading: Container(
-                          height: 45.sp,
-                          width: 45.sp,
-                          decoration:
-                              const BoxDecoration(shape: BoxShape.circle),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(400.r),
-                            child: chatRooms[i].isGroupMsg
-                                ? CachedNetworkImage(
-                                    imageUrl: chatRooms[i].groupImg,
-                                    placeholder: (context, url) =>
-                                        ProfileImageShimmer(
-                                            height: 150.sp, width: 150.sp),
-                                  )
-                                : (user.image == ""
-                                    ? Image.asset(AppImages.avatarPlaceholder,
-                                        fit: BoxFit.cover)
-                                    : CachedNetworkImage(
-                                        imageUrl: user.image,
+                      leading: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                              height: 45.sp,
+                              width: 45.sp,
+                              decoration:
+                                  const BoxDecoration(shape: BoxShape.circle),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(400.r),
+                                child: chatRooms[i].isGroupMsg
+                                    ? CachedNetworkImage(
+                                        imageUrl: chatRooms[i].groupImg,
                                         placeholder: (context, url) =>
                                             ProfileImageShimmer(
-                                                height: 150.sp,
-                                                width: 150.sp))),
-                          )),
+                                                height: 150.sp, width: 150.sp),
+                                      )
+                                    : (user.image == ""
+                                        ? Image.asset(
+                                            AppImages.avatarPlaceholder,
+                                            fit: BoxFit.cover)
+                                        : CachedNetworkImage(
+                                            imageUrl: user.image,
+                                            placeholder: (context, url) =>
+                                                ProfileImageShimmer(
+                                                    height: 150.sp,
+                                                    width: 150.sp))),
+                              )),
+                          chatRooms[i].isGroupMsg
+                              ? const SizedBox()
+                              : Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Icon(Icons.circle,
+                                      size: 15.sp,
+                                      color: user.isActive == true
+                                          ? AppColors.greenColor
+                                          : AppColors.grey150),
+                                )
+                        ],
+                      ),
                       title: Text(
                           chatRooms[i].isGroupMsg
                               ? chatRooms[i].groupName
@@ -98,15 +115,7 @@ class _ChatViewTabState extends State<ChatViewTab> {
                           : Row(
                               children: [
                                 FirebaseController().isSender(lastmsg)
-                                    ? lastmsg.isDelivered == false
-                                        ? Icon(Icons.done,
-                                            size: 18.sp,
-                                            color: AppColors.grey150)
-                                        : Icon(Icons.done_all,
-                                            size: 18.sp,
-                                            color: lastmsg.isSeen
-                                                ? AppColors.primaryColor
-                                                : AppColors.grey150)
+                                    ? AppServices.getMessageStatusIcon(lastmsg)
                                     : const SizedBox(),
                                 AppServices.addWidth(5.w),
                                 Expanded(
@@ -123,25 +132,30 @@ class _ChatViewTabState extends State<ChatViewTab> {
                                 ),
                               ],
                             ),
-                      trailing: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          lastmsg == null
-                              ? const SizedBox()
-                              : Text(db.getTimeFormat(lastmsg.sendAt),
-                                  style: GetTextTheme.sf12_regular
-                                      .copyWith(color: AppColors.grey150)),
-                          FirebaseController().isSender(chatRooms[i].lastMsg)
-                              ? const SizedBox()
-                              : (chatRooms[i].newChats == 0
-                                  ? const SizedBox()
-                                  : Text(
-                                      "${chatRooms[i].newChats.toString()} new messages",
-                                      style: GetTextTheme.sf12_regular.copyWith(
-                                          color: AppColors.primaryColor)))
-                        ],
-                      ));
+                      trailing: lastmsg == null
+                          ? const SizedBox()
+                          : Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(db.getTimeFormat(lastmsg.sendAt),
+                                    style: GetTextTheme.sf12_regular
+                                        .copyWith(color: AppColors.grey150)),
+                                AppServices.addHeight(2.h),
+                                FirebaseController()
+                                            .isSender(chatRooms[i].lastMsg) ||
+                                        chatRooms[i].isGroupMsg
+                                    ? const SizedBox()
+                                    : (chatRooms[i].newChats == 0
+                                        ? const SizedBox()
+                                        : Text(
+                                            "${chatRooms[i].newChats} new ${chatRooms[i].newChats == 1 ? "message" : "messages"}",
+                                            style: GetTextTheme.sf12_regular
+                                                .copyWith(
+                                                    color: AppColors
+                                                        .primaryColor)))
+                              ],
+                            ));
                 }));
   }
 }

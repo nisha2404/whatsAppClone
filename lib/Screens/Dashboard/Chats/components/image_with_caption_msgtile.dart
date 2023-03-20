@@ -105,14 +105,7 @@ class ImageWithCaptionMsgTile extends StatelessWidget {
                                 style: GetTextTheme.sf10_regular),
                             AppServices.addWidth(5.w),
                             FirebaseController().isSender(chat)
-                                ? chat.isDelivered == false
-                                    ? Icon(Icons.done,
-                                        size: 18.sp, color: AppColors.grey150)
-                                    : Icon(Icons.done_all,
-                                        size: 18.sp,
-                                        color: chat.isSeen
-                                            ? AppColors.primaryColor
-                                            : AppColors.grey150)
+                                ? AppServices.getMessageStatusIcon(chat)
                                 : const SizedBox()
                           ],
                         ),

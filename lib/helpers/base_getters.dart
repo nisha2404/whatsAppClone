@@ -1,11 +1,14 @@
 import 'package:chatting_app/helpers/style_sheet.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import '../Screens/Dashboard/Chats/GroupChats/add_group_participant.dart';
 import '../Screens/Dashboard/Settings/settings.dart';
 import '../app_config.dart';
 import '../controllers/firebase_controller.dart';
+import '../models/app_models.dart';
 
 class AppServices {
   /* Height and Width Factors */
@@ -110,6 +113,19 @@ class AppServices {
       AppServices.pushTo(const SettingsView(), context);
     } else {
       FirebaseController().logOut(context);
+    }
+  }
+
+  static getMessageStatusIcon(ChatModel chat) {
+    if (chat.status == MessageStatus.sent) {
+      return Icon(Icons.done, size: 18.sp, color: AppColors.grey150);
+    } else if (chat.status == MessageStatus.delivered) {
+      return Icon(Icons.done_all, size: 18.sp, color: AppColors.grey150);
+    } else if (chat.status == MessageStatus.seen) {
+      return Icon(Icons.done_all, size: 18.sp, color: AppColors.primaryColor);
+    } else {
+      return Icon(Icons.watch_later_outlined,
+          size: 18.sp, color: AppColors.grey150);
     }
   }
 }

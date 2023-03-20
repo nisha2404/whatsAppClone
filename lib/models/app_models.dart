@@ -1,3 +1,13 @@
+enum MessageStatus {
+  // sendByUser,
+  sent,
+  delivered,
+  seen,
+  deleteForMe,
+  deleteForEveryone,
+  permanentDelete
+}
+
 class UserModel {
   String uid;
   String phoneNumber, userName, aboutUser, image;
@@ -20,16 +30,17 @@ class UserModel {
 class ChatModel {
   String msgId, sender, msg, msgType;
   DateTime sendAt;
-  bool isSeen, isDelivered;
-  ChatModel(this.msgId, this.sender, this.msg, this.sendAt, this.isSeen,
-      this.msgType, this.isDelivered);
+  MessageStatus status;
+  // bool isSeen, isDelivered;
+  ChatModel(this.msgId, this.sender, this.msg, this.sendAt, this.msgType,
+      this.status);
   ChatModel.fromChat(Map<Object?, Object?> json, this.msgId)
       : sender = json['sender'].toString(),
         msg = json['message'] == "" ? "" : json['message'].toString(),
         sendAt = DateTime.parse(json['sendAt'].toString()),
         msgType = json['type'].toString(),
-        isSeen = json['seen'].toString() == "false" ? false : true,
-        isDelivered = json['isDelivered'].toString() == "true" ? true : false;
+        status = MessageStatus.values
+            .firstWhere((element) => element.name == json['status'].toString());
 }
 
 class ChatRoomModel {

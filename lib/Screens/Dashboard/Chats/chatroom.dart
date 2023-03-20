@@ -4,12 +4,12 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:chatting_app/Screens/Dashboard/Chats/components/chatRoom_appbar.dart';
-import 'package:chatting_app/Screens/Dashboard/Chats/components/chatRoom_chatsView.dart';
 import 'package:chatting_app/Screens/Dashboard/Chats/components/emoji_picker.dart';
 import 'package:chatting_app/Screens/Dashboard/Chats/components/msg_textField.dart';
 import 'package:chatting_app/controllers/app_data_controller.dart';
 import 'package:chatting_app/controllers/chat_handler.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
+import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:chatting_app/models/app_models.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -18,9 +18,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../helpers/base_getters.dart';
 import '../../../helpers/style_sheet.dart';
+import 'components/image_message_tile.dart';
+import 'components/image_with_caption_msgtile.dart';
+import 'components/text_message_tile.dart';
 
 class ChatRoom extends StatefulWidget {
   UserModel user;
@@ -131,6 +135,8 @@ class _ChatRoomState extends State<ChatRoom> {
 
   bool isDataUploaded = false;
 
+  List<ChatModel> selectedChats = [];
+
   @override
   Widget build(BuildContext context) {
     final db = Provider.of<AppDataController>(context);
@@ -155,79 +161,165 @@ class _ChatRoomState extends State<ChatRoom> {
         child: Scaffold(
           backgroundColor: AppColors.grey100,
           appBar: chatRoomAppBar(widget.user, context, widget.chatRoomModel),
-          body: SafeArea(
-              child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
+          body: Stack(
             children: [
-              AppServices.addHeight(10.h),
-              croppedImg != null && isShowStackContainer == true
-                  ? Expanded(
-                      child: Container(
-                        margin: EdgeInsets.only(bottom: 70.sp),
-                        padding: EdgeInsets.all(40.sp),
-                        height: AppServices.getScreenHeight(context),
-                        width: AppServices.getScreenWidth(context),
-                        decoration:
-                            const BoxDecoration(color: AppColors.grey100),
-                        child: isUploadImage
-                            ? const Center(
-                                child: CircularProgressIndicator.adaptive())
-                            : Image.file(
-                                File(croppedImg!.path),
-                                height: 300.sp,
-                                width: 150.sp,
-                              ),
-                      ),
-                    )
-                  : ChatRoomChatsView(
-                      controller: _controller,
-                      db: db,
-                      chats: chats,
-                      onLongPress: () =>
-                          setState(() => showDeleteButton = true)),
-              MsgTextField(
-                  onLinkBtnPressed: () => onImagePick(),
-                  onEmojiPressed: () => {
-                        AppServices.keyboardUnfocus(context),
-                        setState(() {
-                          emojiShowing = !emojiShowing;
-                        })
-                      },
-                  onSendBtnPressed: () async {
-                    msgType == "text"
-                        ? {
-                            widget.chatRoomModel == null
-                                ? await FirebaseController().createChatRoom({
-                                    "status": MessageStatus.sent.name,
-                                    "sender": auth.currentUser!.uid,
-                                    "sendAt": DateTime.now().toIso8601String(),
-                                    "message": _msgCtrl.text,
-                                    "type": "text"
-                                  }, widget.user.uid, context)
-                                : FirebaseController().sendGroupMessage(
-                                    widget.chatRoomModel!.chatroomId,
-                                    _msgCtrl.text,
-                                    "text")
-                          }
-                        : await uploadImage(widget.chatRoomModel!.isGroupMsg,
-                            widget.chatRoomModel!.chatroomId);
-                    _msgCtrl.clear();
-                    _scrollDown();
-                  },
-                  onChange: (v) => croppedImg != null
-                      ? setState(
-                          () => msgType = "image",
+              SizedBox(
+                height: AppServices.getScreenHeight(context),
+                child: Image.asset(AppImages.doodles,
+                    color: AppColors.blackColor.withOpacity(0.08),
+                    fit: BoxFit.cover),
+              ),
+              SafeArea(
+                  child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  AppServices.addHeight(10.h),
+                  croppedImg != null && isShowStackContainer == true
+                      ? Expanded(
+                          child: Container(
+                            margin: EdgeInsets.only(bottom: 70.sp),
+                            padding: EdgeInsets.all(40.sp),
+                            height: AppServices.getScreenHeight(context),
+                            width: AppServices.getScreenWidth(context),
+                            decoration:
+                                const BoxDecoration(color: AppColors.grey100),
+                            child: isUploadImage
+                                ? const Center(
+                                    child: CircularProgressIndicator.adaptive())
+                                : Image.file(
+                                    File(croppedImg!.path),
+                                    height: 300.sp,
+                                    width: 150.sp,
+                                  ),
+                          ),
                         )
-                      : setState(() => msgType = "text"),
-                  msgCtrl: _msgCtrl,
-                  onTextFieldTap: () => setState(() => emojiShowing = false)),
-              AppEmojiPicker(
-                  offstage: !emojiShowing,
-                  onEmojiSelected: (category, Emoji emoji) =>
-                      _onEmojiSelected(emoji),
-                  onBackspacePressed: () => _onBackspacePressed())
+                      : Expanded(
+                          child: SizedBox(
+                              child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 2.sp),
+                            child: ListView.separated(
+                              controller: _controller,
+                              itemCount: chats.length,
+                              shrinkWrap: true,
+                              itemBuilder: (context, i) {
+                                bool isShowDateCard = (i == 0) ||
+                                    ((i == chats.length - 1) &&
+                                        (chats[i].sendAt.day >
+                                            chats[i - 1].sendAt.day)) ||
+                                    (chats[i].sendAt.day >
+                                            chats[i - 1].sendAt.day &&
+                                        chats[i].sendAt.day <=
+                                            chats[i + 1].sendAt.day);
+                                return Column(
+                                  children: [
+                                    isShowDateCard
+                                        ? Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10.sp,
+                                                vertical: 5.sp),
+                                            margin: EdgeInsets.symmetric(
+                                                vertical: 10.sp),
+                                            decoration: BoxDecoration(
+                                                color: AppColors.whiteColor,
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        10.r)),
+                                            child: Text(DateFormat.yMMMd()
+                                                .format(chats[i].sendAt)))
+                                        : const SizedBox(),
+                                    chats[i].msgType == "image"
+                                        ? GestureDetector(
+                                            onLongPress: () => {},
+                                            child: ImageMessageTile(
+                                                chat: chats[i], controller: db),
+                                          )
+                                        : chats[i].msgType == "imageWithText"
+                                            ? ImageWithCaptionMsgTile(
+                                                chat: chats[i], controller: db)
+                                            : InkWell(
+                                                onLongPress: () {
+                                                  selectedChats.any((element) =>
+                                                          element.msgId ==
+                                                          chats[i].msgId)
+                                                      ? null
+                                                      : selectedChats
+                                                          .add(chats[i]);
+                                                  setState(() {});
+                                                },
+                                                onTap: () {
+                                                  selectedChats.any((element) =>
+                                                          element.msgId ==
+                                                          chats[i].msgId)
+                                                      ? selectedChats
+                                                          .remove(chats[i])
+                                                      : null;
+                                                  setState(() {});
+                                                },
+                                                child: TextMessageTile(
+                                                    chat: chats[i],
+                                                    controller: db,
+                                                    isSelected: selectedChats
+                                                        .any((element) =>
+                                                            element.msgId ==
+                                                            chats[i].msgId)))
+                                  ],
+                                );
+                              },
+                              separatorBuilder:
+                                  (BuildContext context, int index) =>
+                                      AppServices.addHeight(5.h),
+                            ),
+                          )),
+                        ),
+                  MsgTextField(
+                      onLinkBtnPressed: () => onImagePick(),
+                      onEmojiPressed: () => {
+                            AppServices.keyboardUnfocus(context),
+                            setState(() {
+                              emojiShowing = !emojiShowing;
+                            })
+                          },
+                      onSendBtnPressed: () async {
+                        msgType == "text"
+                            ? {
+                                widget.chatRoomModel == null
+                                    ? await FirebaseController()
+                                        .createChatRoom({
+                                        "status": MessageStatus.sent.name,
+                                        "sender": auth.currentUser!.uid,
+                                        "sendAt":
+                                            DateTime.now().toIso8601String(),
+                                        "message": _msgCtrl.text,
+                                        "type": "text"
+                                      }, widget.user.uid, context)
+                                    : FirebaseController().sendGroupMessage(
+                                        widget.chatRoomModel!.chatroomId,
+                                        _msgCtrl.text,
+                                        "text")
+                              }
+                            : await uploadImage(
+                                widget.chatRoomModel!.isGroupMsg,
+                                widget.chatRoomModel!.chatroomId);
+                        _msgCtrl.clear();
+                        _scrollDown();
+                      },
+                      onChange: (v) => croppedImg != null
+                          ? setState(
+                              () => msgType = "image",
+                            )
+                          : setState(() => msgType = "text"),
+                      msgCtrl: _msgCtrl,
+                      onTextFieldTap: () =>
+                          setState(() => emojiShowing = false)),
+                  AppEmojiPicker(
+                      offstage: !emojiShowing,
+                      onEmojiSelected: (category, Emoji emoji) =>
+                          _onEmojiSelected(emoji),
+                      onBackspacePressed: () => _onBackspacePressed())
+                ],
+              )),
             ],
-          )),
+          ),
         ),
       ),
     );

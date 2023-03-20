@@ -28,6 +28,7 @@ class AppImages {
   static const String authVector = "assets/images/authVector.png";
   static const String otpVector = "assets/images/otpVector.png";
   static const String avatarPlaceholder = "assets/images/avatarPlaceholder.png";
+  static const String doodles = "assets/images/doodles.png";
 }
 
 class AppGiffs {

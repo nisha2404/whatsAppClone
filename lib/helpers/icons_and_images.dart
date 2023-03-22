@@ -15,6 +15,7 @@ class AppIcons {
   static const String infoIcon = "assets/icons/info.png";
   static const String phoneIcon = "assets/icons/phone.png";
   static const String editIcon = "assets/icons/edit.png";
+  static const String forwardIcon = "assets/icons/forward.png";
 }
 
 // all types of app Logos are stored in AppLogos
@@ -29,6 +30,7 @@ class AppImages {
   static const String otpVector = "assets/images/otpVector.png";
   static const String avatarPlaceholder = "assets/images/avatarPlaceholder.png";
   static const String doodles = "assets/images/doodles.png";
+  static const String emptyChat = "assets/images/chat.png";
 }
 
 class AppGiffs {

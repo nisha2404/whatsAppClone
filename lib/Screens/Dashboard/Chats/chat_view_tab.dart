@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:chatting_app/Screens/Dashboard/Chats/GroupChats/group_chatroom.dart';
 import 'package:chatting_app/components/shimmers/chat_room_tile_shimmer.dart';
 import 'package:chatting_app/controllers/app_data_controller.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
@@ -57,13 +58,16 @@ class _ChatViewTabState extends State<ChatViewTab> {
 
                   // getUsers();
                   return ListTile(
-                      onTap: () => AppServices.pushTo(
-                          ChatRoom(
-                              user: user,
-                              chatRoomModel: chatRooms[i].isGroupMsg == true
-                                  ? chatRooms[i]
-                                  : null),
-                          context),
+                      onTap: () => chatRooms[i].isGroupMsg
+                          ? AppServices.pushTo(
+                              GroupChatRoom(
+                                  user: user, chatRoomModel: chatRooms[i]),
+                              context)
+                          : AppServices.pushTo(
+                              ChatRoom(
+                                user: user,
+                              ),
+                              context),
                       leading: Stack(
                         clipBehavior: Clip.none,
                         children: [
@@ -97,11 +101,33 @@ class _ChatViewTabState extends State<ChatViewTab> {
                               : Positioned(
                                   bottom: 0,
                                   right: 0,
-                                  child: Icon(Icons.circle,
-                                      size: 15.sp,
-                                      color: user.isActive == true
-                                          ? AppColors.greenColor
-                                          : AppColors.grey150),
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: AppColors.whiteColor,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: user.isActive == true
+                                                ? AppColors.primaryColor
+                                                : AppColors.grey150,
+                                            spreadRadius: 2,
+                                            blurRadius: 7,
+                                          ),
+                                          BoxShadow(
+                                            color: user.isActive == true
+                                                ? AppColors.primaryColor
+                                                : AppColors.grey150,
+                                            spreadRadius: -2,
+                                            blurRadius: 2,
+                                          )
+                                        ]),
+                                    child: Icon(Icons.circle,
+                                        size: 13.sp,
+                                        color: user.isActive == true
+                                            ? AppColors.primaryColor
+                                            : AppColors.grey150),
+                                  ),
                                 )
                         ],
                       ),

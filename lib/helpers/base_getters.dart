@@ -128,4 +128,19 @@ class AppServices {
           size: 18.sp, color: AppColors.grey150);
     }
   }
+
+  static getMessage(ChatModel chat) {
+    if (chat.status == MessageStatus.deleteForMe &&
+        chat.sender == auth.currentUser!.uid) {
+      return "You deleted this message.";
+    } else if (chat.status == MessageStatus.deleteForEveryone) {
+      if (chat.sender == auth.currentUser!.uid) {
+        return "You deleted this message.";
+      } else {
+        return "This message was deleted";
+      }
+    } else {
+      return chat.msg;
+    }
+  }
 }

@@ -49,6 +49,8 @@ class ExpandedButton extends StatelessWidget {
                           ),
                     Expanded(
                       child: Text(btnName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
                           style: GetTextTheme.sf14_regular.copyWith(
                               fontWeight: FontWeight.w500, color: txtColor)),

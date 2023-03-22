@@ -89,6 +89,13 @@ class AppDataController extends ChangeNotifier {
     notifyListeners();
   }
 
+  updateChatIsDelete(MessageStatus status, String msgId) {
+    int chat = _chats.indexWhere((element) => element.msgId == msgId);
+
+    _chats[chat].status = status;
+    notifyListeners();
+  }
+
   resetChats() {
     _chats = [];
     notifyListeners();
@@ -103,8 +110,10 @@ class AppDataController extends ChangeNotifier {
   }
 
   addChatRoom(ChatRoomModel chatRoom) {
-    if (_chatRooms.any((element) => element.chatroomId == chatRoom.chatroomId))
+    if (_chatRooms
+        .any((element) => element.chatroomId == chatRoom.chatroomId)) {
       return;
+    }
     _chatRooms.add(chatRoom);
     notifyListeners();
   }

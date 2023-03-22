@@ -113,6 +113,40 @@ class FirebaseController {
     }
   }
 
+  markAsSeen(String? chatRoomId, ChatModel chat) async {
+    bool isSentByme = chat.sender == auth.currentUser!.uid;
+    if (isSentByme) {
+      return;
+    } else {
+      if (chat.status == MessageStatus.delivered) {
+        await database
+            .ref("chatRoom/$chatRoomId/chats/${chat.msgId}")
+            .update({"status": MessageStatus.seen.name});
+      } else {
+        return;
+      }
+    }
+  }
+
+  markAsDelivered(String? chatRoomId, bool isGroup, ChatModel chat) async {
+    bool isSentByme = chat.sender == auth.currentUser!.uid;
+    if (!isGroup) {
+      if (isSentByme) {
+        return;
+      } else {
+        if (chat.status == MessageStatus.sent) {
+          await database
+              .ref("chatRoom/$chatRoomId/chats/${chat.msgId}")
+              .update({"status": MessageStatus.delivered.name});
+        } else {
+          return;
+        }
+      }
+    } else {
+      return;
+    }
+  }
+
 // function to check the current user or not if current user then navigate to dashboard or navigate to login
   isCurrentUser(BuildContext context) async {
     final db = Provider.of<AppDataController>(context, listen: false);

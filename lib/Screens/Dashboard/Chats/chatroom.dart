@@ -5,21 +5,21 @@ import 'dart:io';
 
 import 'package:chatting_app/Screens/Dashboard/Chats/components/chatRoom_appbar.dart';
 import 'package:chatting_app/Screens/Dashboard/Chats/components/emoji_picker.dart';
+import 'package:chatting_app/Screens/Dashboard/Chats/components/msg_selected_chatRoom_appbar.dart';
 import 'package:chatting_app/Screens/Dashboard/Chats/components/msg_textField.dart';
-import 'package:chatting_app/controllers/app_data_controller.dart';
-import 'package:chatting_app/controllers/chat_handler.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:chatting_app/models/app_models.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_database/ui/firebase_animated_list.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../../controllers/app_data_controller.dart';
 import '../../../helpers/base_getters.dart';
 import '../../../helpers/style_sheet.dart';
 import 'components/image_message_tile.dart';
@@ -28,8 +28,8 @@ import 'components/text_message_tile.dart';
 
 class ChatRoom extends StatefulWidget {
   UserModel user;
-  ChatRoomModel? chatRoomModel;
-  ChatRoom({super.key, required this.user, this.chatRoomModel});
+
+  ChatRoom({super.key, required this.user});
 
   @override
   State<ChatRoom> createState() => _ChatRoomState();
@@ -48,7 +48,6 @@ class _ChatRoomState extends State<ChatRoom> {
     super.initState();
 
     initialize();
-    getStuff();
   }
 
   initialize() async {
@@ -65,34 +64,9 @@ class _ChatRoomState extends State<ChatRoom> {
     }
   }
 
-  getStuff() async {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Add Your Code here.
-      FirebaseController().resetMessages(context);
-    });
-
-    final path = widget.chatRoomModel == null
-        ? database.ref(
-            "chatRoom/${_chatRoom != null ? _chatRoom.chatroomId : ""}/chats")
-        : database.ref("chatRoom/${widget.chatRoomModel!.chatroomId}/chats");
-    _subscription = path.onChildAdded.listen((event) {
-      widget.chatRoomModel == null
-          ? ChatHandler()
-              .onMsgSend(context, event, _chatRoom.chatroomId, widget.user)
-          : ChatHandler()
-              .onGroupMsgSend(context, event, widget.chatRoomModel!.chatroomId);
-    });
-
-    _updateSubscription = path.onChildChanged.listen((event) {
-      ChatHandler.onMsgUpdated(context, event);
-    });
-  }
-
-  @override
-  void dispose() {
-    _subscription.cancel();
-    _updateSubscription.cancel();
-    super.dispose();
+  DatabaseReference getUrl() {
+    final path = database.ref("chatRoom/${_chatRoom.chatroomId}/chats");
+    return path;
   }
 
   void _scrollDown() {
@@ -140,7 +114,7 @@ class _ChatRoomState extends State<ChatRoom> {
   @override
   Widget build(BuildContext context) {
     final db = Provider.of<AppDataController>(context);
-    final chats = db.getIndividualChats;
+    initialize();
     return WillPopScope(
       onWillPop: () {
         if (emojiShowing) {
@@ -160,117 +134,169 @@ class _ChatRoomState extends State<ChatRoom> {
         },
         child: Scaffold(
           backgroundColor: AppColors.grey100,
-          appBar: chatRoomAppBar(widget.user, context, widget.chatRoomModel),
+          appBar: selectedChats.isEmpty
+              ? chatRoomAppBar(widget.user, context)
+              : msgSelectedChatRoomAppBar(
+                  context,
+                  selectedChats,
+                  () => setState(() => selectedChats = []),
+                  _chatRoom.chatroomId),
           body: Stack(
+            fit: StackFit.expand,
             children: [
-              SizedBox(
-                height: AppServices.getScreenHeight(context),
-                child: Image.asset(AppImages.doodles,
-                    color: AppColors.blackColor.withOpacity(0.08),
-                    fit: BoxFit.cover),
-              ),
+              Image.asset(AppImages.doodles,
+                  color: AppColors.blackColor.withOpacity(0.08),
+                  fit: BoxFit.cover),
               SafeArea(
                   child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   AppServices.addHeight(10.h),
-                  croppedImg != null && isShowStackContainer == true
+                  _chatRoom == null
                       ? Expanded(
-                          child: Container(
-                            margin: EdgeInsets.only(bottom: 70.sp),
-                            padding: EdgeInsets.all(40.sp),
-                            height: AppServices.getScreenHeight(context),
-                            width: AppServices.getScreenWidth(context),
-                            decoration:
-                                const BoxDecoration(color: AppColors.grey100),
-                            child: isUploadImage
-                                ? const Center(
-                                    child: CircularProgressIndicator.adaptive())
-                                : Image.file(
-                                    File(croppedImg!.path),
-                                    height: 300.sp,
-                                    width: 150.sp,
-                                  ),
+                          child: Padding(
+                            padding: EdgeInsets.all(10.sp),
+                            child: Column(
+                              children: [
+                                const Expanded(flex: 1, child: SizedBox()),
+                                Image.asset(AppImages.emptyChat,
+                                    fit: BoxFit.cover),
+                                AppServices.addHeight(20.h),
+                                Text("Send your first Message",
+                                    style: GetTextTheme.sf24_bold.copyWith(
+                                        color: AppColors.primaryColor)),
+                                const Expanded(flex: 2, child: SizedBox())
+                              ],
+                            ),
                           ),
                         )
-                      : Expanded(
-                          child: SizedBox(
-                              child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 2.sp),
-                            child: ListView.separated(
-                              controller: _controller,
-                              itemCount: chats.length,
-                              shrinkWrap: true,
-                              itemBuilder: (context, i) {
-                                bool isShowDateCard = (i == 0) ||
-                                    ((i == chats.length - 1) &&
-                                        (chats[i].sendAt.day >
-                                            chats[i - 1].sendAt.day)) ||
-                                    (chats[i].sendAt.day >
-                                            chats[i - 1].sendAt.day &&
-                                        chats[i].sendAt.day <=
-                                            chats[i + 1].sendAt.day);
-                                return Column(
-                                  children: [
-                                    isShowDateCard
-                                        ? Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10.sp,
-                                                vertical: 5.sp),
-                                            margin: EdgeInsets.symmetric(
-                                                vertical: 10.sp),
-                                            decoration: BoxDecoration(
-                                                color: AppColors.whiteColor,
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                        10.r)),
-                                            child: Text(DateFormat.yMMMd()
-                                                .format(chats[i].sendAt)))
-                                        : const SizedBox(),
-                                    chats[i].msgType == "image"
-                                        ? GestureDetector(
-                                            onLongPress: () => {},
-                                            child: ImageMessageTile(
-                                                chat: chats[i], controller: db),
-                                          )
-                                        : chats[i].msgType == "imageWithText"
-                                            ? ImageWithCaptionMsgTile(
-                                                chat: chats[i], controller: db)
-                                            : InkWell(
-                                                onLongPress: () {
-                                                  selectedChats.any((element) =>
-                                                          element.msgId ==
-                                                          chats[i].msgId)
-                                                      ? null
-                                                      : selectedChats
-                                                          .add(chats[i]);
-                                                  setState(() {});
-                                                },
-                                                onTap: () {
-                                                  selectedChats.any((element) =>
-                                                          element.msgId ==
-                                                          chats[i].msgId)
-                                                      ? selectedChats
-                                                          .remove(chats[i])
-                                                      : null;
-                                                  setState(() {});
-                                                },
-                                                child: TextMessageTile(
-                                                    chat: chats[i],
-                                                    controller: db,
-                                                    isSelected: selectedChats
-                                                        .any((element) =>
-                                                            element.msgId ==
-                                                            chats[i].msgId)))
-                                  ],
-                                );
-                              },
-                              separatorBuilder:
-                                  (BuildContext context, int index) =>
-                                      AppServices.addHeight(5.h),
-                            ),
-                          )),
-                        ),
+                      : (croppedImg != null && isShowStackContainer == true
+                          ? Expanded(
+                              child: Container(
+                                margin: EdgeInsets.only(bottom: 70.sp),
+                                padding: EdgeInsets.all(40.sp),
+                                height: AppServices.getScreenHeight(context),
+                                width: AppServices.getScreenWidth(context),
+                                decoration: const BoxDecoration(
+                                    color: AppColors.grey100),
+                                child: isUploadImage
+                                    ? const Center(
+                                        child: CircularProgressIndicator
+                                            .adaptive())
+                                    : Image.file(
+                                        File(croppedImg!.path),
+                                        height: 300.sp,
+                                        width: 150.sp,
+                                      ),
+                              ),
+                            )
+                          : Expanded(
+                              child: SizedBox(
+                                  child: Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 2.sp),
+                                      child: FirebaseAnimatedList(
+                                          controller: _controller,
+                                          query: getUrl(),
+                                          itemBuilder: (context, snapshot,
+                                              animation, i) {
+                                            final chats = snapshot.value
+                                                as Map<Object?, Object?>;
+                                            final msgType =
+                                                chats['type'].toString();
+                                            final sendAt = DateTime.parse(
+                                                chats['sendAt'].toString());
+
+                                            FirebaseController().markAsSeen(
+                                                _chatRoom.chatroomId,
+                                                ChatModel.fromChat(chats,
+                                                    snapshot.key.toString()));
+
+                                            return Column(
+                                              children: [
+                                                msgType == "image"
+                                                    ? GestureDetector(
+                                                        onLongPress: () => {},
+                                                        child: ImageMessageTile(
+                                                            chat: ChatModel
+                                                                .fromChat(
+                                                                    chats,
+                                                                    snapshot.key
+                                                                        .toString()),
+                                                            controller: db),
+                                                      )
+                                                    : msgType == "imageWithText"
+                                                        ? ImageWithCaptionMsgTile(
+                                                            chat: ChatModel
+                                                                .fromChat(
+                                                                    chats,
+                                                                    snapshot.key
+                                                                        .toString()),
+                                                            controller: db)
+                                                        : InkWell(
+                                                            onLongPress: () {
+                                                              if (selectedChats
+                                                                  .isEmpty) {
+                                                                selectedChats.any((element) =>
+                                                                        element
+                                                                            .msgId ==
+                                                                        snapshot
+                                                                            .key
+                                                                            .toString())
+                                                                    ? null
+                                                                    : selectedChats.add(ChatModel.fromChat(
+                                                                        chats,
+                                                                        snapshot
+                                                                            .key
+                                                                            .toString()));
+                                                              } else {
+                                                                null;
+                                                              }
+                                                              setState(() {});
+                                                            },
+                                                            onTap: () {
+                                                              if (selectedChats
+                                                                  .isEmpty) {
+                                                                null;
+                                                              } else {
+                                                                selectedChats
+                                                                        .any((element) =>
+                                                                            element.msgId ==
+                                                                            snapshot.key
+                                                                                .toString())
+                                                                    ? selectedChats.removeWhere((element) =>
+                                                                        element
+                                                                            .msgId ==
+                                                                        snapshot
+                                                                            .key
+                                                                            .toString())
+                                                                    : selectedChats.add(ChatModel.fromChat(
+                                                                        chats,
+                                                                        snapshot
+                                                                            .key
+                                                                            .toString()));
+                                                              }
+
+                                                              setState(() {});
+                                                            },
+                                                            child: TextMessageTile(
+                                                                chat: ChatModel
+                                                                    .fromChat(
+                                                                        chats,
+                                                                        snapshot.key
+                                                                            .toString()),
+                                                                controller: db,
+                                                                isSelected: selectedChats
+                                                                    .any((element) =>
+                                                                        element
+                                                                            .msgId ==
+                                                                        snapshot
+                                                                            .key
+                                                                            .toString())))
+                                              ],
+                                            );
+                                          }))),
+                            )),
                   MsgTextField(
                       onLinkBtnPressed: () => onImagePick(),
                       onEmojiPressed: () => {
@@ -282,24 +308,15 @@ class _ChatRoomState extends State<ChatRoom> {
                       onSendBtnPressed: () async {
                         msgType == "text"
                             ? {
-                                widget.chatRoomModel == null
-                                    ? await FirebaseController()
-                                        .createChatRoom({
-                                        "status": MessageStatus.sent.name,
-                                        "sender": auth.currentUser!.uid,
-                                        "sendAt":
-                                            DateTime.now().toIso8601String(),
-                                        "message": _msgCtrl.text,
-                                        "type": "text"
-                                      }, widget.user.uid, context)
-                                    : FirebaseController().sendGroupMessage(
-                                        widget.chatRoomModel!.chatroomId,
-                                        _msgCtrl.text,
-                                        "text")
+                                await FirebaseController().createChatRoom({
+                                  "status": MessageStatus.sent.name,
+                                  "sender": auth.currentUser!.uid,
+                                  "sendAt": DateTime.now().toIso8601String(),
+                                  "message": _msgCtrl.text,
+                                  "type": "text"
+                                }, widget.user.uid, context)
                               }
-                            : await uploadImage(
-                                widget.chatRoomModel!.isGroupMsg,
-                                widget.chatRoomModel!.chatroomId);
+                            : await uploadImage();
                         _msgCtrl.clear();
                         _scrollDown();
                       },
@@ -361,7 +378,7 @@ class _ChatRoomState extends State<ChatRoom> {
     }
   }
 
-  uploadImage(bool isGroup, [String chatRoomId = ""]) async {
+  uploadImage() async {
     setState(() {
       isUploadImage = true;
     });
@@ -375,22 +392,15 @@ class _ChatRoomState extends State<ChatRoom> {
     try {
       await referenceRoot.putFile(File(croppedImg!.path));
       imageUrl = await referenceRoot.getDownloadURL();
-      isGroup
-          ? await FirebaseController().sendGroupMessage(
-              chatRoomId,
-              _msgCtrl.text.isNotEmpty
-                  ? "${imageUrl}__${_msgCtrl.text}"
-                  : imageUrl,
-              _msgCtrl.text.isNotEmpty ? "imageWithText" : "image")
-          : await FirebaseController().createChatRoom({
-              "status": MessageStatus.sent.name,
-              "sender": auth.currentUser!.uid,
-              "message": _msgCtrl.text.isNotEmpty
-                  ? "${imageUrl}__${_msgCtrl.text}"
-                  : imageUrl,
-              "type": _msgCtrl.text.isNotEmpty ? "imageWithText" : "image",
-              "sendAt": DateTime.now().toIso8601String(),
-            }, widget.user.uid, context);
+      await FirebaseController().createChatRoom({
+        "status": MessageStatus.sent.name,
+        "sender": auth.currentUser!.uid,
+        "message": _msgCtrl.text.isNotEmpty
+            ? "${imageUrl}__${_msgCtrl.text}"
+            : imageUrl,
+        "type": _msgCtrl.text.isNotEmpty ? "imageWithText" : "image",
+        "sendAt": DateTime.now().toIso8601String(),
+      }, widget.user.uid, context);
 
       setState(() {
         isShowStackContainer = false;
@@ -402,6 +412,4 @@ class _ChatRoomState extends State<ChatRoom> {
       print(e);
     }
   }
-
-  onDeletePress() {}
 }

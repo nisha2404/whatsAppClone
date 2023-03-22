@@ -50,6 +50,7 @@ dependencies:
   firebase_storage: ^11.0.14
   cached_network_image: ^3.2.3
   shimmer: ^2.0.0
+  sticky_headers: ^0.3.0+2
 
 dev_dependencies:
   flutter_test:

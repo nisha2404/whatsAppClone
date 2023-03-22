@@ -93,6 +93,13 @@ class ChatHandler {
                   msgs.children.last.key.toString()),
           UserModel.fromUser(
               user.value as Map<Object?, Object?>, user.key.toString())));
+      FirebaseController().markAsDelivered(
+        event.snapshot.key.toString(),
+        (event.snapshot.value as Map<Object?, Object?>)['isGroup'].toString() ==
+            "true",
+        ChatModel.fromChat(msgs.children.last.value as Map<Object?, Object?>,
+            msgs.children.last.key.toString()),
+      );
 
       db.setLoader(false);
     }
@@ -109,6 +116,16 @@ class ChatHandler {
       if (isRoomAvailable) {
         final path = database.ref("chatRoom/$roomId/chats");
         final chats = await path.get();
+
+        FirebaseController().markAsDelivered(
+            roomId,
+            (event.snapshot.value as Map<Object?, Object?>)['isGroup']
+                    .toString() ==
+                "true",
+            ChatModel.fromChat(
+                chats.children.last.value as Map<Object?, Object?>,
+                chats.children.last.key.toString()));
+
         db.setLastMsg(
             roomId.toString(),
             ChatModel.fromChat(

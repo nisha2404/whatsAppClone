@@ -5,6 +5,8 @@ enum MessageStatus {
   seen,
   deleteForMe,
   deleteForEveryone,
+  deleteBySender,
+  deleteByReceiver,
   permanentDelete
 }
 

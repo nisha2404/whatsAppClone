@@ -68,42 +68,6 @@ class _DeleteForMeDialogState extends State<DeleteForMeDialog> {
   }
 
   onDeletePress(String chatRoomId, List<ChatModel> selectedChats) async {
-    final db = Provider.of<AppDataController>(context, listen: false);
-    AppServices.popView(context);
-    if (selectedChats.any((e) =>
-        e.status == MessageStatus.deleteForMe ||
-        e.status == MessageStatus.deleteForEveryone)) {
-      final chats = selectedChats
-          .where((e) =>
-              e.status == MessageStatus.deleteForMe ||
-              e.status == MessageStatus.deleteForEveryone)
-          .toList();
-      for (var chat in chats) {
-        final path = database.ref("chatRoom/$chatRoomId/chats/${chat.msgId}");
-        if (FirebaseController().isSender(chat)) {
-          if (chat.status == MessageStatus.deleteByReceiver) {
-            await path.update({"status": MessageStatus.permanentDelete.name});
-            db.updateChatIsDelete(MessageStatus.permanentDelete, chat.msgId);
-          } else {
-            await path.update({"status": MessageStatus.deleteBySender.name});
-            db.updateChatIsDelete(MessageStatus.deleteBySender, chat.msgId);
-          }
-        } else {
-          if (chat.status == MessageStatus.deleteBySender) {
-            await path.update({"status": MessageStatus.permanentDelete.name});
-            db.updateChatIsDelete(MessageStatus.permanentDelete, chat.msgId);
-          } else {
-            await path.update({"status": MessageStatus.deleteByReceiver.name});
-            db.updateChatIsDelete(MessageStatus.deleteByReceiver, chat.msgId);
-          }
-        }
-      }
-    } else {
-      for (var chat in selectedChats) {
-        final path = database.ref("chatRoom/$chatRoomId/chats/${chat.msgId}");
-        await path.update({"status": MessageStatus.deleteForMe.name});
-        db.updateChatIsDelete(MessageStatus.deleteForMe, chat.msgId);
-      }
-    }
+   
   }
 }

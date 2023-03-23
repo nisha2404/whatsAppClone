@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:chatting_app/Screens/Dashboard/Chats/chat_view_tab.dart';
 import 'package:chatting_app/Screens/Dashboard/all_contacts_view.dart';
 import 'package:chatting_app/Screens/Dashboard/calls/call_view_tab.dart';
@@ -26,6 +28,8 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
   final _firebase = FirebaseDatabase.instance;
   final dbController = FirebaseController();
+
+  late StreamSubscription<DatabaseEvent> _userSubscription;
 
   List<Widget> tabs = [
     Tab(
@@ -72,7 +76,7 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
     path.onChildChanged.listen((event) {
       ChatHandler().setData(event, context);
     });
-    path2.onChildChanged.listen((event) {
+    _userSubscription = path2.onChildChanged.listen((event) {
       ChatHandler().setUserData(event, context);
     });
     WidgetsBinding.instance.addObserver(this);
@@ -91,6 +95,12 @@ class _DashboardState extends State<Dashboard> with WidgetsBindingObserver {
 
     setState(() {});
     return true;
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _userSubscription.cancel();
   }
 
   @override

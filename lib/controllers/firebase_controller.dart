@@ -63,11 +63,22 @@ class FirebaseController {
 
       if (value.user!.phoneNumber!.isNotEmpty) {
         AppServices.pushAndRemove(
-            db.getUsers.isNotEmpty ||
-                    db.getUsers.any((element) => element.uid == value.user!.uid)
-                ? const Dashboard()
+            db.getUsers.isNotEmpty
+                ? (db.getUsers.any((element) => element.uid == value.user!.uid)
+                    ? const Dashboard()
+                    : const AddProfileInfo())
                 : const AddProfileInfo(),
             context);
+        db.getUsers.isNotEmpty
+            ? db.setCurrentUser(db.getUsers
+                .where((element) => element.uid == value.user!.uid)
+                .toList()
+                .first)
+            : null;
+      } else {
+        db.setCurrentUser(db.getUsers
+            .firstWhere((element) => element.uid == value.user!.uid));
+        AppServices.pushAndRemove(const AddProfileInfo(), context);
       }
     });
     db.setLoader(false);

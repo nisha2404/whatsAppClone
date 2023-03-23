@@ -1,5 +1,4 @@
 enum MessageStatus {
-  // sendByUser,
   sent,
   delivered,
   seen,

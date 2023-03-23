@@ -227,11 +227,10 @@ class _ChatRoomState extends State<ChatRoom> {
                                                       )
                                                     : msgType == "imageWithText"
                                                         ? ImageWithCaptionMsgTile(
-                                                            chat: ChatModel
-                                                                .fromChat(
-                                                                    chats,
-                                                                    snapshot.key
-                                                                        .toString()),
+                                                            chat: ChatModel.fromChat(
+                                                                chats,
+                                                                snapshot.key
+                                                                    .toString()),
                                                             controller: db)
                                                         : InkWell(
                                                             onLongPress: () {
@@ -279,20 +278,24 @@ class _ChatRoomState extends State<ChatRoom> {
 
                                                               setState(() {});
                                                             },
-                                                            child: TextMessageTile(
-                                                                chat: ChatModel
-                                                                    .fromChat(
+                                                            child: FirebaseController().isSender(
+                                                                    ChatModel.fromChat(
                                                                         chats,
-                                                                        snapshot.key
-                                                                            .toString()),
-                                                                controller: db,
-                                                                isSelected: selectedChats
-                                                                    .any((element) =>
-                                                                        element
-                                                                            .msgId ==
                                                                         snapshot
                                                                             .key
-                                                                            .toString())))
+                                                                            .toString()))
+                                                                ? (chats['status'] ==
+                                                                            MessageStatus
+                                                                                .deleteBySender.name ||
+                                                                        chats['status'] ==
+                                                                            MessageStatus
+                                                                                .permanentDelete.name
+                                                                    ? const SizedBox()
+                                                                    : TextMessageTile(
+                                                                        chat: ChatModel.fromChat(chats, snapshot.key.toString()),
+                                                                        controller: db,
+                                                                        isSelected: selectedChats.any((element) => element.msgId == snapshot.key.toString())))
+                                                                : ((chats['status'] == MessageStatus.deleteByReceiver.name || chats['status'] == MessageStatus.permanentDelete.name) ? const SizedBox() : TextMessageTile(chat: ChatModel.fromChat(chats, snapshot.key.toString()), controller: db, isSelected: selectedChats.any((element) => element.msgId == snapshot.key.toString()))))
                                               ],
                                             );
                                           }))),

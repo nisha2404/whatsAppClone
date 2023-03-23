@@ -226,7 +226,7 @@ class _ProfileViewState extends State<ProfileView> {
     try {
       await referenceRoot.putFile(File(croppedProfileImg!.path));
       imgUrl = await referenceRoot.getDownloadURL();
-      path.update({"profileImg": imgUrl});
+      await path.update({"profileImg": imgUrl});
       await path.get().then((v) => db.setCurrentUser(UserModel.fromUser(
           v.value as Map<Object?, Object?>, v.key.toString())));
       setState(() => isUploadImage = false);

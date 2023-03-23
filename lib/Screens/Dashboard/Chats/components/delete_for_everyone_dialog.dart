@@ -5,10 +5,7 @@ import 'package:chatting_app/helpers/base_getters.dart';
 import 'package:chatting_app/helpers/style_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
 
-import '../../../../controllers/app_data_controller.dart';
-import '../../../../controllers/firebase_controller.dart';
 import '../../../../models/app_models.dart';
 
 class DeleteForEveryoneDialog extends StatefulWidget {
@@ -44,20 +41,12 @@ class _DeleteForEveryoneDialogState extends State<DeleteForEveryoneDialog> {
             ),
             AppServices.addHeight(15.h),
             AppTextButton(
-                onpress: () async {
-                  setState(() => status = MessageStatus.deleteForEveryone);
-                  await onDeletePress(
-                      status, widget.chatRoomId, widget.selectedChats);
-                },
+                onpress: () {},
                 btnName: "Delete for everyone",
                 txtStyle: GetTextTheme.sf14_medium
                     .copyWith(color: AppColors.primaryColor)),
             AppTextButton(
-                onpress: () => {
-                      setState(() => status = MessageStatus.deleteForMe),
-                      onDeletePress(
-                          status, widget.chatRoomId, widget.selectedChats)
-                    },
+                onpress: () => {},
                 btnName: "Delete for me",
                 txtStyle: GetTextTheme.sf14_medium
                     .copyWith(color: AppColors.primaryColor)),
@@ -70,16 +59,5 @@ class _DeleteForEveryoneDialogState extends State<DeleteForEveryoneDialog> {
         ),
       ),
     );
-  }
-
-  onDeletePress(MessageStatus status, String chatRoomId,
-      List<ChatModel> selectedChats) async {
-    final db = Provider.of<AppDataController>(context, listen: false);
-    AppServices.popView(context);
-    for (var chat in selectedChats) {
-      final path = database.ref("chatRoom/$chatRoomId/chats/${chat.msgId}");
-      await path.update({"status": status.name});
-      db.updateChatIsDelete(status, chat.msgId);
-    }
   }
 }

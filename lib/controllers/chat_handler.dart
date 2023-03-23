@@ -93,13 +93,18 @@ class ChatHandler {
                   msgs.children.last.key.toString()),
           UserModel.fromUser(
               user.value as Map<Object?, Object?>, user.key.toString())));
-      FirebaseController().markAsDelivered(
-        event.snapshot.key.toString(),
-        (event.snapshot.value as Map<Object?, Object?>)['isGroup'].toString() ==
-            "true",
-        ChatModel.fromChat(msgs.children.last.value as Map<Object?, Object?>,
-            msgs.children.last.key.toString()),
-      );
+      (event.snapshot.value as Map<Object?, Object?>)['isGroup'].toString() ==
+              "true"
+          ? null
+          : FirebaseController().markAsDelivered(
+              event.snapshot.key.toString(),
+              (event.snapshot.value as Map<Object?, Object?>)['isGroup']
+                      .toString() ==
+                  "true",
+              ChatModel.fromChat(
+                  msgs.children.last.value as Map<Object?, Object?>,
+                  msgs.children.last.key.toString()),
+            );
 
       db.setLoader(false);
     }
@@ -153,16 +158,17 @@ class ChatHandler {
     final isUpdatable = chatRooms
         .where((element) => element.uid == event.snapshot.key.toString())
         .toList();
-    if (isUpdatable.isEmpty) return;
-    final user = await path.get();
-    final index = db.getAllChatRooms
-        .indexWhere((element) => element.userdata == isUpdatable.first);
-    db.updateUser(
-        index,
-        (user.value as Map<Object?, Object?>)['isActive'].toString() == "true"
-            ? true
-            : false,
-        int.parse(
-            (user.value as Map<Object?, Object?>)['lastSeen'].toString()));
+    if (isUpdatable.isEmpty) {
+      return;
+    } else {
+      final allChatRooms = db.getAllChatRooms;
+      final user = await path.get();
+      final index = allChatRooms
+          .indexWhere((element) => element.userdata == isUpdatable.first);
+      db.updateUserData(
+          index,
+          UserModel.fromUser(
+              user.value as Map<Object?, Object?>, user.key.toString()));
+    }
   }
 }

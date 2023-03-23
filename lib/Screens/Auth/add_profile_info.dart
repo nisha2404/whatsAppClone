@@ -9,10 +9,12 @@ import 'package:chatting_app/components/expanded_button.dart';
 import 'package:chatting_app/components/help_popup_button.dart';
 import 'package:chatting_app/components/shimmers/profile_img_shimmer.dart';
 import 'package:chatting_app/components/underline_input_border_textfield.dart';
+import 'package:chatting_app/controllers/app_data_controller.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/base_getters.dart';
 import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:chatting_app/helpers/style_sheet.dart';
+import 'package:chatting_app/models/app_models.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +22,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class AddProfileInfo extends StatefulWidget {
   const AddProfileInfo({super.key});
@@ -271,6 +274,7 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
   }
 
   onContinue() async {
+    final db = Provider.of<AppDataController>(context, listen: false);
     setState(() => isLoading = true);
     Map<String, dynamic> data = {
       "isActive": true,
@@ -285,6 +289,16 @@ class _AddProfileInfoState extends State<AddProfileInfo> {
       "phoneNumber": auth.currentUser!.phoneNumber
     };
     await FirebaseController().addUserProfile(data, context);
+    db.setCurrentUser(UserModel(
+        auth.currentUser!.uid,
+        auth.currentUser!.phoneNumber.toString(),
+        _nameController.text,
+        _aboutController.text.isEmpty
+            ? "Hey there! I am using ${AppConfig.appName}"
+            : _aboutController.text.trim(),
+        imageUrl == "" ? "" : imageUrl,
+        true,
+        DateTime.now().millisecondsSinceEpoch));
     setState(() => isLoading = false);
     AppServices.pushAndRemove(const Dashboard(), context);
   }

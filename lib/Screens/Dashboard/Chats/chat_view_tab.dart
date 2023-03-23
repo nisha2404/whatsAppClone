@@ -3,7 +3,6 @@ import 'package:chatting_app/Screens/Dashboard/Chats/GroupChats/group_chatroom.d
 import 'package:chatting_app/components/shimmers/chat_room_tile_shimmer.dart';
 import 'package:chatting_app/controllers/app_data_controller.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
-import 'package:chatting_app/models/app_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -53,7 +52,7 @@ class _ChatViewTabState extends State<ChatViewTab> {
                 itemCount: chatRooms.length,
                 shrinkWrap: true,
                 itemBuilder: (context, i) {
-                  final user = chatRooms[i].userdata as UserModel;
+                  final user = chatRooms[i].userdata;
                   final lastmsg = chatRooms[i].lastMsg;
 
                   // getUsers();

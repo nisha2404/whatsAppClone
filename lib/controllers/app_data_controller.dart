@@ -41,9 +41,14 @@ class AppDataController extends ChangeNotifier {
     notifyListeners();
   }
 
-  updateUser(int index, bool isActive, int lastSeen) {
-    _chatRooms[index].userdata.isActive = isActive;
-    _chatRooms[index].userdata.lastSeen = lastSeen;
+  // updateUser(int index, bool isActive, int lastSeen) {
+  //   _chatRooms[index].userdata.isActive = isActive;
+  //   _chatRooms[index].userdata.lastSeen = lastSeen;
+  //   notifyListeners();
+  // }
+
+  updateUserData(int index, UserModel user) {
+    _chatRooms[index].userdata = user;
     notifyListeners();
   }
 

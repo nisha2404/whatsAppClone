@@ -32,7 +32,7 @@ class ImageMessageTile extends StatelessWidget {
       child: Stack(
         children: [
           Row(
-            mainAxisAlignment: _controller.isSender(chat)
+            mainAxisAlignment: _controller.isSender(chat.sender)
                 ? MainAxisAlignment.end
                 : MainAxisAlignment.start,
             children: [
@@ -65,15 +65,15 @@ class ImageMessageTile extends StatelessWidget {
           ),
           Positioned(
             bottom: 0,
-            right: _controller.isSender(chat) ? 0 : null,
-            left: _controller.isSender(chat) ? null : 0,
+            right: _controller.isSender(chat.sender) ? 0 : null,
+            left: _controller.isSender(chat.sender) ? null : 0,
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 15.sp, vertical: 8.sp),
               decoration: BoxDecoration(
-                  color: _controller.isSender(chat)
+                  color: _controller.isSender(chat.sender)
                       ? AppColors.orange40
                       : AppColors.whiteColor,
-                  borderRadius: _controller.isSender(chat)
+                  borderRadius: _controller.isSender(chat.sender)
                       ? BorderRadius.circular(15.r)
                           .copyWith(topRight: const Radius.circular(0))
                       : BorderRadius.circular(15.r)
@@ -84,7 +84,7 @@ class ImageMessageTile extends StatelessWidget {
                   Text(controller.getTimeFormat(chat.sendAt),
                       style: GetTextTheme.sf10_regular),
                   AppServices.addWidth(5),
-                  _controller.isSender(chat)
+                  _controller.isSender(chat.sender)
                       ? AppServices.getMessageStatusIcon(chat)
                       : const SizedBox()
                 ],

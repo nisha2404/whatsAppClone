@@ -219,7 +219,7 @@ class _ProfileViewState extends State<ProfileView> {
     final path = database.ref("users/${auth.currentUser!.uid}");
     Reference deleteImgRef = storage.refFromURL(imgPath);
     await deleteImgRef.delete();
-    String uniqueFileName = DateTime.now().millisecondsSinceEpoch.toString();
+    String uniqueFileName = auth.currentUser!.uid;
     Reference referenceRoot =
         FirebaseStorage.instance.ref().child('images').child(uniqueFileName);
 
@@ -230,7 +230,7 @@ class _ProfileViewState extends State<ProfileView> {
       await path.get().then((v) => db.setCurrentUser(UserModel.fromUser(
           v.value as Map<Object?, Object?>, v.key.toString())));
       setState(() => isUploadImage = false);
-    } catch (e) {
+    } on SocketException catch (e) {
       setState(() => isUploadImage = false);
       print(e);
     }

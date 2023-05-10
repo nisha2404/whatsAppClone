@@ -1,13 +1,4 @@
-enum MessageStatus {
-  sent,
-  delivered,
-  seen,
-  deleteForMe,
-  deleteForEveryone,
-  deleteBySender,
-  deleteByReceiver,
-  permanentDelete
-}
+enum MessageStatus { sent, delivered, seen }
 
 class UserModel {
   String uid;
@@ -30,18 +21,22 @@ class UserModel {
 
 class ChatModel {
   String msgId, sender, msg, msgType;
+  dynamic replyAt;
   DateTime sendAt;
   MessageStatus status;
   // bool isSeen, isDelivered;
   ChatModel(this.msgId, this.sender, this.msg, this.sendAt, this.msgType,
-      this.status);
+      this.status, this.replyAt);
   ChatModel.fromChat(Map<Object?, Object?> json, this.msgId)
       : sender = json['sender'].toString(),
         msg = json['message'] == "" ? "" : json['message'].toString(),
         sendAt = DateTime.parse(json['sendAt'].toString()),
         msgType = json['type'].toString(),
         status = MessageStatus.values
-            .firstWhere((element) => element.name == json['status'].toString());
+            .firstWhere((element) => element.name == json['status'].toString()),
+        replyAt = json['replyAt'] == null
+            ? ""
+            : ReplyModel.fromReply(json['replyAt'] as Map<Object?, Object?>);
 }
 
 class ChatRoomModel {
@@ -76,6 +71,16 @@ class ChatRoomModel {
             ? ""
             : json['groupImg'].toString(),
         createdAt = DateTime.parse(json['createdAt'].toString());
+}
+
+class ReplyModel {
+  String id, msg, type, senderId;
+  ReplyModel(this.id, this.msg, this.type, this.senderId);
+  ReplyModel.fromReply(Map<Object?, Object?> json)
+      : msg = json['msg'].toString(),
+        id = json['id'].toString(),
+        senderId = json['senderId'].toString(),
+        type = json['type'].toString();
 }
 
 // class ChatroomsClass {

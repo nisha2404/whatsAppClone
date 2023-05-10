@@ -32,7 +32,7 @@ class ImageWithCaptionMsgTile extends StatelessWidget {
       child: Stack(
         children: [
           Row(
-            mainAxisAlignment: _controller.isSender(chat)
+            mainAxisAlignment: _controller.isSender(chat.sender)
                 ? MainAxisAlignment.end
                 : MainAxisAlignment.start,
             children: [
@@ -65,10 +65,10 @@ class ImageWithCaptionMsgTile extends StatelessWidget {
           ),
           Positioned(
               bottom: 0,
-              right: _controller.isSender(chat) ? 0 : null,
-              left: _controller.isSender(chat) ? null : 0,
+              right: _controller.isSender(chat.sender) ? 0 : null,
+              left: _controller.isSender(chat.sender) ? null : 0,
               child: Row(
-                mainAxisAlignment: FirebaseController().isSender(chat)
+                mainAxisAlignment: FirebaseController().isSender(chat.sender)
                     ? MainAxisAlignment.end
                     : MainAxisAlignment.start,
                 children: [
@@ -78,7 +78,7 @@ class ImageWithCaptionMsgTile extends StatelessWidget {
                         borderRadius: BorderRadius.vertical(
                             // top: Radius.circular(15.r),
                             bottom: Radius.circular(15.r))),
-                    color: FirebaseController().isSender(chat)
+                    color: FirebaseController().isSender(chat.sender)
                         ? AppColors.orange40
                         : AppColors.whiteColor,
                     child: Container(
@@ -87,9 +87,10 @@ class ImageWithCaptionMsgTile extends StatelessWidget {
                       width: 220.sp,
                       padding: EdgeInsets.all(10.sp),
                       child: Column(
-                        crossAxisAlignment: FirebaseController().isSender(chat)
-                            ? CrossAxisAlignment.start
-                            : CrossAxisAlignment.end,
+                        crossAxisAlignment:
+                            FirebaseController().isSender(chat.sender)
+                                ? CrossAxisAlignment.start
+                                : CrossAxisAlignment.end,
                         children: [
                           Text(chat.msg.split("__").last,
                               maxLines: 3,
@@ -99,14 +100,14 @@ class ImageWithCaptionMsgTile extends StatelessWidget {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             mainAxisAlignment:
-                                FirebaseController().isSender(chat)
+                                FirebaseController().isSender(chat.sender)
                                     ? MainAxisAlignment.end
                                     : MainAxisAlignment.start,
                             children: [
                               Text(controller.getTimeFormat(chat.sendAt),
                                   style: GetTextTheme.sf10_regular),
                               AppServices.addWidth(5.w),
-                              FirebaseController().isSender(chat)
+                              FirebaseController().isSender(chat.sender)
                                   ? AppServices.getMessageStatusIcon(chat)
                                   : const SizedBox()
                             ],

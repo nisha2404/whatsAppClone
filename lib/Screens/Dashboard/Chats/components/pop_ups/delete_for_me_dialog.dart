@@ -6,20 +6,19 @@ import 'package:chatting_app/helpers/style_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../../../models/app_models.dart';
+import '../../../../../models/app_models.dart';
 
-class DeleteForEveryoneDialog extends StatefulWidget {
+class DeleteForMeDialog extends StatefulWidget {
   List<ChatModel> selectedChats;
   String chatRoomId;
-  DeleteForEveryoneDialog(
+  DeleteForMeDialog(
       {super.key, required this.selectedChats, required this.chatRoomId});
 
   @override
-  State<DeleteForEveryoneDialog> createState() =>
-      _DeleteForEveryoneDialogState();
+  State<DeleteForMeDialog> createState() => _DeleteForMeDialogState();
 }
 
-class _DeleteForEveryoneDialogState extends State<DeleteForEveryoneDialog> {
+class _DeleteForMeDialogState extends State<DeleteForMeDialog> {
   late MessageStatus status;
 
   @override
@@ -40,24 +39,30 @@ class _DeleteForEveryoneDialogState extends State<DeleteForEveryoneDialog> {
                       .copyWith(color: AppColors.grey150)),
             ),
             AppServices.addHeight(15.h),
-            AppTextButton(
-                onpress: () {},
-                btnName: "Delete for everyone",
-                txtStyle: GetTextTheme.sf14_medium
-                    .copyWith(color: AppColors.primaryColor)),
-            AppTextButton(
-                onpress: () => {},
-                btnName: "Delete for me",
-                txtStyle: GetTextTheme.sf14_medium
-                    .copyWith(color: AppColors.primaryColor)),
-            AppTextButton(
-                onpress: () => AppServices.popView(context),
-                btnName: "Cancel",
-                txtStyle: GetTextTheme.sf14_medium
-                    .copyWith(color: AppColors.primaryColor)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                AppTextButton(
+                    onpress: () async {
+                      await onDeletePress(
+                          widget.chatRoomId, widget.selectedChats);
+                    },
+                    btnName: "Delete for me",
+                    txtStyle: GetTextTheme.sf14_medium
+                        .copyWith(color: AppColors.primaryColor)),
+                AppServices.addWidth(5.w),
+                AppTextButton(
+                    onpress: () => AppServices.popView(context),
+                    btnName: "Cancel",
+                    txtStyle: GetTextTheme.sf14_medium
+                        .copyWith(color: AppColors.primaryColor)),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
+
+  onDeletePress(String chatRoomId, List<ChatModel> selectedChats) async {}
 }

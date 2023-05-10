@@ -1,7 +1,7 @@
 // ignore_for_file: file_names
 
-import 'package:chatting_app/Screens/Dashboard/Chats/components/delete_for_everyone_dialog.dart';
-import 'package:chatting_app/Screens/Dashboard/Chats/components/delete_for_me_dialog.dart';
+import 'package:chatting_app/Screens/Dashboard/Chats/components/pop_ups/delete_for_everyone_dialog.dart';
+import 'package:chatting_app/Screens/Dashboard/Chats/components/pop_ups/delete_for_me_dialog.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
 import 'package:chatting_app/helpers/icons_and_images.dart';
 import 'package:chatting_app/models/app_models.dart';

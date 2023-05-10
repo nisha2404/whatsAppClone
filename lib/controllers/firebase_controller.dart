@@ -257,7 +257,7 @@ class FirebaseController {
       db.setTempMsg(data);
       final path = database.ref("chatRoom").push();
       await path.set({
-        "members": [targetid, auth.currentUser!.uid],
+        "members": [auth.currentUser!.uid, targetid],
         "isGroup": false,
         "groupName": "",
         "groupImg": "",
@@ -280,8 +280,8 @@ class FirebaseController {
   }
 
 // function to check if the current user is sender or not.
-  bool isSender(ChatModel chat) {
-    return chat.sender == auth.currentUser!.uid;
+  bool isSender(String senderId) {
+    return senderId == auth.currentUser!.uid;
   }
 
   // function to check if the message is delivered or not.

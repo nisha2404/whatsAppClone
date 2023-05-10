@@ -153,23 +153,7 @@ class _ChatRoomState extends State<ChatRoom> {
                 children: [
                   AppServices.addHeight(10.h),
                   _chatRoom == null
-                      ? Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.all(10.sp),
-                            child: Column(
-                              children: [
-                                const Expanded(flex: 1, child: SizedBox()),
-                                Image.asset(AppImages.emptyChat,
-                                    fit: BoxFit.cover),
-                                AppServices.addHeight(20.h),
-                                Text("Send your first Message",
-                                    style: GetTextTheme.sf24_bold.copyWith(
-                                        color: AppColors.primaryColor)),
-                                const Expanded(flex: 2, child: SizedBox())
-                              ],
-                            ),
-                          ),
-                        )
+                      ? const SizedBox()
                       : (croppedImg != null && isShowStackContainer == true
                           ? Expanded(
                               child: Container(
@@ -227,75 +211,41 @@ class _ChatRoomState extends State<ChatRoom> {
                                                       )
                                                     : msgType == "imageWithText"
                                                         ? ImageWithCaptionMsgTile(
-                                                            chat: ChatModel.fromChat(
-                                                                chats,
-                                                                snapshot.key
-                                                                    .toString()),
+                                                            chat: ChatModel
+                                                                .fromChat(
+                                                                    chats,
+                                                                    snapshot.key
+                                                                        .toString()),
                                                             controller: db)
                                                         : InkWell(
                                                             onLongPress: () {
-                                                              if (selectedChats
-                                                                  .isEmpty) {
-                                                                selectedChats.any((element) =>
-                                                                        element
-                                                                            .msgId ==
-                                                                        snapshot
-                                                                            .key
-                                                                            .toString())
-                                                                    ? null
-                                                                    : selectedChats.add(ChatModel.fromChat(
-                                                                        chats,
-                                                                        snapshot
-                                                                            .key
-                                                                            .toString()));
-                                                              } else {
-                                                                null;
-                                                              }
-                                                              setState(() {});
+                                                              onLongPress(
+                                                                  snapshot.key
+                                                                      .toString(),
+                                                                  chats);
                                                             },
                                                             onTap: () {
-                                                              if (selectedChats
-                                                                  .isEmpty) {
-                                                                null;
-                                                              } else {
-                                                                selectedChats
-                                                                        .any((element) =>
-                                                                            element.msgId ==
-                                                                            snapshot.key
-                                                                                .toString())
-                                                                    ? selectedChats.removeWhere((element) =>
+                                                              onTap(
+                                                                  snapshot.key
+                                                                      .toString(),
+                                                                  chats);
+                                                            },
+                                                            child: TextMessageTile(
+                                                                user: widget
+                                                                    .user,
+                                                                chat: ChatModel
+                                                                    .fromChat(
+                                                                        chats,
+                                                                        snapshot.key
+                                                                            .toString()),
+                                                                controller: db,
+                                                                isSelected: selectedChats
+                                                                    .any((element) =>
                                                                         element
                                                                             .msgId ==
                                                                         snapshot
                                                                             .key
-                                                                            .toString())
-                                                                    : selectedChats.add(ChatModel.fromChat(
-                                                                        chats,
-                                                                        snapshot
-                                                                            .key
-                                                                            .toString()));
-                                                              }
-
-                                                              setState(() {});
-                                                            },
-                                                            child: FirebaseController().isSender(
-                                                                    ChatModel.fromChat(
-                                                                        chats,
-                                                                        snapshot
-                                                                            .key
-                                                                            .toString()))
-                                                                ? (chats['status'] ==
-                                                                            MessageStatus
-                                                                                .deleteBySender.name ||
-                                                                        chats['status'] ==
-                                                                            MessageStatus
-                                                                                .permanentDelete.name
-                                                                    ? const SizedBox()
-                                                                    : TextMessageTile(
-                                                                        chat: ChatModel.fromChat(chats, snapshot.key.toString()),
-                                                                        controller: db,
-                                                                        isSelected: selectedChats.any((element) => element.msgId == snapshot.key.toString())))
-                                                                : ((chats['status'] == MessageStatus.deleteByReceiver.name || chats['status'] == MessageStatus.permanentDelete.name) ? const SizedBox() : TextMessageTile(chat: ChatModel.fromChat(chats, snapshot.key.toString()), controller: db, isSelected: selectedChats.any((element) => element.msgId == snapshot.key.toString()))))
+                                                                            .toString())))
                                               ],
                                             );
                                           }))),
@@ -343,6 +293,29 @@ class _ChatRoomState extends State<ChatRoom> {
         ),
       ),
     );
+  }
+
+  onLongPress(String id, Map<Object?, Object?> chats) {
+    if (selectedChats.isEmpty) {
+      selectedChats.any((element) => element.msgId == id)
+          ? null
+          : selectedChats.add(ChatModel.fromChat(chats, id));
+    } else {
+      null;
+    }
+    setState(() {});
+  }
+
+  onTap(String id, Map<Object?, Object?> chats) {
+    if (selectedChats.isEmpty) {
+      null;
+    } else {
+      selectedChats.any((element) => element.msgId == id)
+          ? selectedChats.removeWhere((element) => element.msgId == id)
+          : selectedChats.add(ChatModel.fromChat(chats, id));
+    }
+
+    setState(() {});
   }
 
   onImagePick() async {

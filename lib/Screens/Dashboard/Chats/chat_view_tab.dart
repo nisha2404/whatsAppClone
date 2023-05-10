@@ -3,6 +3,7 @@ import 'package:chatting_app/Screens/Dashboard/Chats/GroupChats/group_chatroom.d
 import 'package:chatting_app/components/shimmers/chat_room_tile_shimmer.dart';
 import 'package:chatting_app/controllers/app_data_controller.dart';
 import 'package:chatting_app/controllers/firebase_controller.dart';
+import 'package:chatting_app/models/app_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -24,13 +25,16 @@ class _ChatViewTabState extends State<ChatViewTab> {
   @override
   Widget build(BuildContext context) {
     final db = Provider.of<AppDataController>(context);
-    final chatRooms = db.getAllChatRooms
+    List<ChatRoomModel> chatRooms = db.getAllChatRooms
         .where((element) =>
             element.members.any((element) => element == auth.currentUser!.uid))
         .toList();
-    chatRooms.sort((a, b) => b.lastMsg == null
+    // chatRooms.sort((a,b) => b.lastMsg.se)
+    chatRooms.sort((a, b) => b.lastMsg == null || a.lastMsg == null
         ? b.createdAt.compareTo(a.createdAt)
-        : b.lastMsg.sendAt.compareTo(a.lastMsg.sendAt));
+        : b.lastMsg.sendAt.millisecondsSinceEpoch
+            .compareTo(a.lastMsg.sendAt.millisecondsSinceEpoch));
+    // print(chatRooms.first.lastMsg.sendAt.millisecondsSinceEpoch);`
     return db.showLoader
         ? Column(
             children: List.generate(5, (index) => const ChatRoomTileShimmer()))
@@ -139,7 +143,7 @@ class _ChatViewTabState extends State<ChatViewTab> {
                           ? const SizedBox()
                           : Row(
                               children: [
-                                FirebaseController().isSender(lastmsg)
+                                FirebaseController().isSender(lastmsg.sender)
                                     ? AppServices.getMessageStatusIcon(lastmsg)
                                     : const SizedBox(),
                                 AppServices.addWidth(5.w),
@@ -167,8 +171,8 @@ class _ChatViewTabState extends State<ChatViewTab> {
                                     style: GetTextTheme.sf12_regular
                                         .copyWith(color: AppColors.grey150)),
                                 AppServices.addHeight(2.h),
-                                FirebaseController()
-                                            .isSender(chatRooms[i].lastMsg) ||
+                                FirebaseController().isSender(
+                                            chatRooms[i].lastMsg.sender) ||
                                         chatRooms[i].isGroupMsg
                                     ? const SizedBox()
                                     : (chatRooms[i].newChats == 0
